@@ -101,8 +101,14 @@ Comprehensive modernization dashboard displaying:
 ### 👥 Team Page (`/team`)
 Meet the SpringBoard team:
 - **Sam Yati** (Dev 1 - Senior Architect): Codebase analysis and architecture planning
+  - Email: samyati.syt@gmail.com
+  - GitHub: @narattscoward
 - **Win Yu Maung** (Dev 2 - Lead Developer): Code refactoring and Spring Boot 3 migration
+  - Email: winyumg2003a@gmail.com
+  - GitHub: @Kusk24
 - **Swan Htet Aung** (Dev 3 - QA Engineer): Testing, validation, and documentation
+  - Email: swanhtetag09@gmail.com
+  - GitHub: @swanhtetaung01
 
 Each team member card includes:
 - Role and responsibilities

@@ -1,5 +1,6 @@
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { GITHUB_REPO_URL, GITHUB_REPO_NAME } from '@/lib/constants';
 
 export default function ReportPage() {
   return (
@@ -358,8 +359,8 @@ export default function ReportPage() {
 
         {/* GitHub CTA */}
         <div className="text-center">
-          <a 
-            href="https://github.com/IBM-Bob-Au-Team/SpringBoard" 
+          <a
+            href={GITHUB_REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-3 px-8 py-4 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg shadow-primary/25"
@@ -370,7 +371,7 @@ export default function ReportPage() {
             <span>View Full Code on GitHub</span>
           </a>
           <p className="text-sm text-gray-500 mt-4">
-            IBM-Bob-Au-Team/SpringBoard
+            {GITHUB_REPO_NAME}
           </p>
         </div>
       </div>
