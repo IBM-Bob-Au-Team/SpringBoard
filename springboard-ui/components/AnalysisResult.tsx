@@ -6,6 +6,12 @@ interface AnalysisResultProps {
   onViewReport?: () => void;
 }
 
+/**
+ * SECURITY: This component NEVER displays any token information
+ * - No token values shown anywhere
+ * - When proceeding to refactoring, user must provide token again (never cached)
+ * - All sensitive data is excluded from display
+ */
 export default function AnalysisResult({ result, onStartMigration, onViewReport }: AnalysisResultProps) {
   // Error state - repo not accessible
   if (!result.accessible) {
@@ -179,12 +185,18 @@ export default function AnalysisResult({ result, onStartMigration, onViewReport 
             View Full Report
           </button>
           {result.needsMigration && (
-            <button
-              onClick={onStartMigration}
-              className="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg shadow-primary/25"
-            >
-              Start Modernization
-            </button>
+            <div className="flex-1">
+              <button
+                onClick={onStartMigration}
+                className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg shadow-primary/25"
+              >
+                Start Modernization
+              </button>
+              {/* SECURITY: Inform user they'll need to provide token again */}
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                🔒 You'll be asked for your GitHub token again for security
+              </p>
+            </div>
           )}
         </div>
       </div>

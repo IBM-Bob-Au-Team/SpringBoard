@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import AnalysisResult from '@/components/AnalysisResult';
+import TokenInput from '@/components/TokenInput';
 import type { AnalysisResult as AnalysisResultType } from '@/lib/types';
 
 export default function Home() {
@@ -12,10 +13,39 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResultType | null>(null);
   const [error, setError] = useState('');
+  const [urlError, setUrlError] = useState('');
+
+  // SECURITY: Validate GitHub URL format
+  const validateGitHubUrl = (url: string): boolean => {
+    if (!url) {
+      setUrlError('Please enter a GitHub repository URL');
+      return false;
+    }
+
+    const trimmed = url.trim();
+
+    // Must be a github.com URL
+    if (!trimmed.startsWith('https://github.com/')) {
+      setUrlError('Invalid URL. Must be a GitHub repository URL starting with https://github.com/');
+      return false;
+    }
+
+    // Basic structure validation
+    const path = trimmed.replace('https://github.com/', '');
+    const parts = path.split('/');
+
+    if (parts.length < 2 || !parts[0] || !parts[1]) {
+      setUrlError('Invalid GitHub URL format. Expected: https://github.com/owner/repository');
+      return false;
+    }
+
+    setUrlError('');
+    return true;
+  };
 
   const handleAnalyze = async () => {
-    if (!repoUrl.trim()) {
-      setError('Please enter a GitHub repository URL');
+    // SECURITY: Validate URL before submission
+    if (!validateGitHubUrl(repoUrl)) {
       return;
     }
 
@@ -43,6 +73,9 @@ export default function Home() {
       }
 
       setAnalysisResult(data);
+      
+      // SECURITY: Clear token after successful API call
+      setToken('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
@@ -138,7 +171,8 @@ export default function Home() {
           </div>
 
           <div className="bg-[#161616] border border-gray-800 rounded-2xl p-8">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* GitHub URL Input */}
               <div>
                 <label htmlFor="repoUrl" className="block text-sm font-medium text-gray-300 mb-2">
                   GitHub Repository URL
@@ -147,39 +181,34 @@ export default function Home() {
                   id="repoUrl"
                   type="text"
                   value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
+                  onChange={(e) => {
+                    setRepoUrl(e.target.value);
+                    setUrlError('');
+                  }}
+                  onBlur={() => {
+                    if (repoUrl) validateGitHubUrl(repoUrl);
+                  }}
                   placeholder="https://github.com/owner/repository"
                   className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
                   disabled={isAnalyzing}
                 />
+                {urlError && (
+                  <div className="mt-2 text-sm text-red-400 flex items-start space-x-2">
+                    <span>⚠️</span>
+                    <span>{urlError}</span>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label htmlFor="token" className="block text-sm font-medium text-gray-300 mb-2">
-                  GitHub Token (Optional)
-                </label>
-                <input
-                  id="token"
-                  type="password"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  placeholder="ghp_xxxxxxxxxxxx"
-                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
-                  disabled={isAnalyzing}
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Required for private repositories. Get your token from{' '}
-                  <a
-                    href="https://github.com/settings/tokens"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    GitHub Settings
-                  </a>
-                </p>
-              </div>
+              {/* Secure Token Input Component */}
+              <TokenInput
+                value={token}
+                onChange={setToken}
+                label="GitHub Token (Optional for Public Repos)"
+                placeholder="ghp_xxxxxxxxxxxx"
+              />
 
+              {/* Error Display */}
               {error && (
                 <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
                   <p className="text-red-400 text-sm">{error}</p>
@@ -204,9 +233,11 @@ export default function Home() {
                 )}
               </button>
 
-              <p className="text-xs text-center text-gray-500">
-                Works with public repositories. Private repos require GitHub token.
-              </p>
+              <div className="text-xs text-center text-gray-500 space-y-1">
+                <p>✓ Works with public repositories</p>
+                <p>✓ Private repos require GitHub token</p>
+                <p>✓ Your token is never stored or logged</p>
+              </div>
             </div>
           </div>
 
