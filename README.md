@@ -259,29 +259,46 @@ Deploy modernized app
 
 ## 🔧 CI/CD Pipeline
 
-SpringBoard uses GitHub Actions for continuous integration and deployment:
+SpringBoard uses **GitHub Actions** for continuous integration and deployment with **security-first** design:
 
 ### **Deployment Workflow** (`.github/workflows/deploy.yml`)
-- Triggers on push to `main`
-- Runs build and type checking
-- Deploys to Vercel production
-- Requires: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+- ✅ **Security Scan** - TruffleHog scans for accidentally committed secrets
+- ✅ **Build & Test** - Type checking, linting, and build validation
+- ✅ **Deploy to Vercel** - Automated production deployment
+- 🔒 **Pinned Actions** - All actions use commit SHA (not `@latest`)
+- 🔒 **Limited Permissions** - Only `contents: read` access
+- 🔒 **Frozen Lockfile** - `--frozen-lockfile` prevents supply chain attacks
 
 ### **PR Check Workflow** (`.github/workflows/pr-check.yml`)
-- Triggers on pull requests to `main`
-- Runs linting, type checking, and build
-- Auto-comments on PR with build status
-- Ensures code quality before merge
+- ✅ **PR Security Scan** - Scans only PR changes for secrets
+- ✅ **Build Validation** - Ensures code compiles and passes checks
+- ✅ **Auto Comments** - Posts build status directly on PR
+- 🔒 **Blocks `.env.local`** - Prevents accidental secret commits
 
-### **Setup Instructions**
+### **Security Features**
+- 🛡️ No hardcoded secrets in workflows
+- 🛡️ All secrets from GitHub repository secrets
+- 🛡️ Rate limiting and CORS protection
+- 🛡️ Security headers on all API routes
+- 🛡️ Server-side only token handling
 
-1. Add GitHub Secrets (Settings → Secrets and variables → Actions):
-   - `VERCEL_TOKEN` - From [Vercel Account Settings](https://vercel.com/account/tokens)
-   - `VERCEL_ORG_ID` - From Vercel project settings
-   - `VERCEL_PROJECT_ID` - From Vercel project settings
+### **Required GitHub Secrets**
+1. `VERCEL_TOKEN` - Vercel deployment authentication
+2. `SPRINGBOARD_GITHUB_TOKEN` - GitHub API access for repo analysis
+3. `WATSONX_API_KEY` - IBM watsonx.ai authentication
+4. `WATSONX_PROJECT_ID` - watsonx.ai project identifier
+5. `WATSONX_URL` - watsonx.ai API endpoint
 
-2. Push to main branch → Auto-deploy to production
-3. Create PR → Auto-validation and feedback
+### **Quick Setup**
+
+📖 **See [CI-CD-SETUP.md](./CI-CD-SETUP.md) for complete setup instructions**
+
+```bash
+# 1. Add all required secrets to GitHub repository
+# 2. Configure Vercel project with environment variables
+# 3. Push to main → Auto-deploy
+# 4. Create PR → Auto-validation
+```
 
 ---
 
@@ -393,7 +410,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🔗 Links
 
 - **Live Demo**: [springboard-demo.vercel.app](https://springboard-demo.vercel.app) *(coming soon)*
-- **Documentation**: [docs/](./docs/)
+- **CI/CD Setup Guide**: [CI-CD-SETUP.md](./CI-CD-SETUP.md)
+- **Security Documentation**: [SECURITY.md](./SECURITY.md)
 - **Bob Sessions**: [bob_sessions/](./bob_sessions/)
 - **Problem & Solution**: [problem-solution.md](./problem-solution.md)
 - **How We Used Bob**: [how-we-used-bob.md](./how-we-used-bob.md)

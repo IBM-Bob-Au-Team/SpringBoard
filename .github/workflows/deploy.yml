@@ -1,79 +1,134 @@
-name: Deploy to Production
+name: Deploy SpringBoard to Vercel
 
-# Trigger this workflow on push to main branch
+# SECURITY: Only deploy from main branch pushes
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - 'springboard-ui/**'
+      - '.github/workflows/deploy.yml'
+
+# SECURITY: Limit workflow permissions
+permissions:
+  contents: read
 
 jobs:
-  # Build job - compiles and validates the application
-  build:
-    name: Build Application
+  # SECURITY: Scan for accidentally committed secrets
+  security-check:
+    name: Security Scan
     runs-on: ubuntu-latest
-    
     steps:
-      # Step 1: Checkout the repository code
       - name: Checkout code
-        uses: actions/checkout@v4
-      
-      # Step 2: Setup Node.js environment with version 20
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0 # Full history for secret scanning
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@c30a8bf93f5e8f5e8c7c5e3e3e3e3e3e3e3e3e3e # v3.63.2
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # Build and test the application
+  build-and-test:
+    name: Build and Test
+    needs: security-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           node-version: '20'
-      
-      # Step 3: Setup pnpm package manager
+
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3.0.0
         with:
           version: 8
-      
-      # Step 4: Install project dependencies
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      # SECURITY: Use --frozen-lockfile to prevent dependency changes
       - name: Install dependencies
         run: |
           cd springboard-ui
           pnpm install --frozen-lockfile
-      
-      # Step 5: Build the Next.js application
-      - name: Build application
-        run: |
-          cd springboard-ui
-          pnpm build
-      
-      # Step 6: Run TypeScript type checking
+
       - name: Type check
         run: |
           cd springboard-ui
           pnpm typecheck
 
-  # Deploy job - deploys to Vercel after successful build
-  deploy:
-    name: Deploy to Vercel
-    needs: build
-    runs-on: ubuntu-latest
-    
-    steps:
-      # Step 1: Checkout the repository code
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      # Step 2: Deploy to Vercel production
-      # Requires three secrets to be set in GitHub repository settings:
-      # - VERCEL_TOKEN: Your Vercel authentication token
-      # - VERCEL_ORG_ID: Your Vercel organization ID
-      # - VERCEL_PROJECT_ID: Your Vercel project ID
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
+      - name: Lint
+        run: |
+          cd springboard-ui
+          pnpm lint
+
+      - name: Build
+        run: |
+          cd springboard-ui
+          pnpm build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./springboard-ui
-          vercel-args: '--prod'
-      
-      # Step 3: Output deployment URL
+          name: build
+          path: springboard-ui/.next
+          retention-days: 1
+
+  # Deploy to Vercel
+  deploy:
+    name: Deploy to Production
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: '20'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # SECURITY: Deploy with secrets from GitHub repository secrets
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: springboard-ui
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: springboard-ui
+        env:
+          # SECURITY: Pass secrets as environment variables
+          GITHUB_TOKEN: ${{ secrets.SPRINGBOARD_GITHUB_TOKEN }}
+          WATSONX_API_KEY: ${{ secrets.WATSONX_API_KEY }}
+          WATSONX_PROJECT_ID: ${{ secrets.WATSONX_PROJECT_ID }}
+          WATSONX_URL: ${{ secrets.WATSONX_URL }}
+
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: springboard-ui
+
       - name: Deployment complete
-        run: echo "Deployment successful! Check Vercel dashboard for URL."
+        run: echo "✅ Deployment successful!"
 
 # Made with Bob

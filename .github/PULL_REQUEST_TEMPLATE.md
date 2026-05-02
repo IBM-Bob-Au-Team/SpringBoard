@@ -1,54 +1,47 @@
 # Pull Request
 
-## What does this PR do?
-<!-- Provide a clear and concise description of what this PR accomplishes -->
+## 📝 What does this PR do?
+<!-- Describe the changes in this PR -->
 
 
 
-## Which developer task is this?
-<!-- Reference the task number or description from your project board/issues -->
+## 👨‍💻 Which developer branch is this?
+<!-- Check one -->
+- [ ] Dev1
+- [ ] Dev2
+- [ ] Dev3
 
+## 📁 Bob sessions included in bob_sessions folder?
+<!-- Check one -->
+- [ ] Yes - Bob session files are in `bob_sessions/dev-X/`
+- [ ] No - This PR doesn't include Bob sessions
+- [ ] N/A - No Bob was used for this change
 
+## 🔒 Security Checklist
+<!-- All items must be checked before merging -->
+- [ ] No hardcoded tokens or API keys in code
+- [ ] No `.env.local` file committed
+- [ ] Token handling is server-side only (no `NEXT_PUBLIC_` prefix for secrets)
+- [ ] No sensitive data in `console.log` statements
+- [ ] All new dependencies are from trusted sources
+- [ ] No secrets in comments or documentation
 
-## Bob sessions included in bob_sessions/?
-<!-- List the Bob session directories that contain the work for this PR -->
-<!-- Example: bob_sessions/dev-1/, bob_sessions/feature-xyz/ -->
-
-- [ ] Bob session directory included: `bob_sessions/`
-- [ ] Session contains relevant screenshots
-- [ ] Session contains conversation history
-
-
-
-## Screenshots
-<!-- Add screenshots to help explain your changes -->
-<!-- You can drag and drop images here -->
-
-### Before
-<!-- Screenshot of the feature/page before changes -->
-
-
-### After
-<!-- Screenshot of the feature/page after changes -->
-
-
-
-## Checklist
-<!-- Mark completed items with [x] -->
-
-- [ ] Code builds successfully (`pnpm build`)
-- [ ] TypeScript type checking passes (`pnpm typecheck`)
-- [ ] Linting passes (`pnpm lint`)
+## 🧪 Testing
+<!-- Describe how you tested these changes -->
 - [ ] Tested locally
-- [ ] Environment variables documented (if added)
-- [ ] README updated (if needed)
-- [ ] Bob session documented in `bob_sessions/`
+- [ ] All type checks pass (`pnpm typecheck`)
+- [ ] All linting passes (`pnpm lint`)
+- [ ] Build succeeds (`pnpm build`)
+
+## 📸 Screenshots (if applicable)
+<!-- Add screenshots of UI changes -->
 
 
 
-## Additional Notes
-<!-- Any additional information that reviewers should know -->
+## 📚 Additional Notes
+<!-- Any additional information reviewers should know -->
+
 
 
 ---
-*Made with IBM Bob* 🤖
+*Made with SpringBoard*
