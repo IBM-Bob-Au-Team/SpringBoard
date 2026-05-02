@@ -26,6 +26,11 @@ export interface GitHubRepo {
   html_url: string;
   private: boolean;
   default_branch: string;
+  permissions?: {
+    admin: boolean;
+    push: boolean;
+    pull: boolean;
+  };
 }
 
 export interface GitHubTreeItem {
@@ -48,6 +53,25 @@ export interface PomDependency {
   groupId: string;
   artifactId: string;
   version?: string;
+}
+
+export interface RefactorRequest {
+  repoUrl: string;
+  token: string;
+}
+
+export interface RefactorResponse {
+  success: boolean;
+  message: string;
+  branch?: string;
+  prUrl?: string | null;
+  status?: string;
+  error?: string;
+}
+
+export interface GitHubTokenPermissions {
+  scopes: string[];
+  hasWriteAccess: boolean;
 }
 
 // Made with Bob

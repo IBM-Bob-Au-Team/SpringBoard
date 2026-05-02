@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { RefactorRequest, RefactorResponse } from '@/lib/types';
+import { parseGitHubUrl, checkRepoAccess } from '@/lib/github';
+
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,65 +21,43 @@ export async function POST(request: NextRequest) {
     if (!repoUrl) {
       return NextResponse.json(
         { error: 'Repository URL is required' } as RefactorResponse,
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (!token) {
       return NextResponse.json(
         { error: 'GitHub token is required for refactoring' } as RefactorResponse,
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
-    // Parse GitHub URL to extract owner and repo name
-    const urlMatch = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-    if (!urlMatch) {
+    // Parse GitHub URL
+    const parsed = parseGitHubUrl(repoUrl);
+    if (!parsed.isValid) {
       return NextResponse.json(
         { error: 'Invalid GitHub URL format' } as RefactorResponse,
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
-    const [, owner, repoName] = urlMatch;
-    const cleanRepoName = repoName.replace(/\.git$/, '');
+    const { owner, repo } = parsed;
 
-    // Verify token has write access by checking permissions
-    const headers: HeadersInit = {
-      'Accept': 'application/vnd.github.v3+json',
-      'Authorization': `Bearer ${token}`,
-      'User-Agent': 'SpringBoard-Refactor',
-    };
+    // Check repo access with the provided token
+    const accessResult = await checkRepoAccess(owner, repo, token);
 
-    // Check repo access and permissions
-    const repoResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${cleanRepoName}`,
-      { headers }
-    );
-
-    if (!repoResponse.ok) {
-      if (repoResponse.status === 401) {
-        return NextResponse.json({
-          success: false,
-          message: '',
-          error: 'Invalid GitHub token',
-        } as RefactorResponse, { status: 401 });
-      }
-      if (repoResponse.status === 404) {
-        return NextResponse.json({
-          success: false,
-          message: '',
-          error: 'Repository not found or token does not have access',
-        } as RefactorResponse, { status: 404 });
-      }
+    if (!accessResult.accessible) {
+      const statusCode = accessResult.error?.includes('rate limit') ? 429 :
+                        accessResult.error?.includes('not found') ? 404 : 401;
+      
       return NextResponse.json({
         success: false,
         message: '',
-        error: `GitHub API error: ${repoResponse.statusText}`,
-      } as RefactorResponse, { status: repoResponse.status });
+        error: accessResult.error || 'Failed to access repository',
+      } as RefactorResponse, { status: statusCode, headers: corsHeaders });
     }
 
-    const repoData = await repoResponse.json();
+    const repoData = accessResult.repoData!;
 
     // Check if user has push/write permissions
     const hasWriteAccess = repoData.permissions?.push || repoData.permissions?.admin;
@@ -77,7 +67,7 @@ export async function POST(request: NextRequest) {
         success: false,
         message: '',
         error: 'Token does not have write access to this repository. Please ensure your token has "repo" scope.',
-      } as RefactorResponse, { status: 403 });
+      } as RefactorResponse, { status: 403, headers: corsHeaders });
     }
 
     // Mock response - refactoring initiated successfully
@@ -89,7 +79,7 @@ export async function POST(request: NextRequest) {
       status: 'processing',
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Refactor error:', error);
@@ -97,7 +87,7 @@ export async function POST(request: NextRequest) {
       success: false,
       message: '',
       error: error instanceof Error ? error.message : 'Internal server error',
-    } as RefactorResponse, { status: 500 });
+    } as RefactorResponse, { status: 500, headers: corsHeaders });
   }
 }
 
