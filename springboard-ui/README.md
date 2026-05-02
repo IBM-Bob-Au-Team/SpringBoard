@@ -1,16 +1,17 @@
 # SpringBoard UI
 
-A modern Next.js 14 showcase website demonstrating IBM Bob IDE's capability to modernize legacy Spring Boot 2 applications to Spring Boot 3.x with automated refactoring, testing, and deployment.
+A modern Next.js 14 web application that provides instant analysis and modernization insights for Spring Boot applications, helping developers understand migration requirements from Spring Boot 2 to Spring Boot 3.
 
 ## What is SpringBoard?
 
-SpringBoard is a demonstration project created for the **IBM Bob Dev Day Hackathon 2026** that showcases how IBM Bob IDE can automatically modernize a legacy Spring Boot 2 application to Spring Boot 3.x. The project includes:
+SpringBoard is an AI-powered analysis platform created for the **IBM Bob Dev Day Hackathon 2026** that helps developers:
 
-- Automated code refactoring (javax.* → jakarta.*)
-- Dependency upgrades (Java 11 → 17, Spring Boot 2.x → 3.1.5)
-- Docker containerization with health checks
-- Comprehensive documentation and testing
-- Professional web interface to showcase the results
+- **Analyze** any Spring Boot repository instantly
+- **Detect** Spring Boot version, Java version, and dependencies
+- **Identify** migration issues and compatibility problems
+- **Provide** actionable recommendations for modernization
+- **Support** both public and private repositories
+- **Integrate** optionally with IBM watsonx.ai for AI-powered refactoring
 
 ## Tech Stack
 
@@ -67,81 +68,95 @@ pnpm lint
 ## Pages Overview
 
 ### 🏠 Home Page (`/`)
-The landing page featuring:
-- **Hero Section**: Introduction to SpringBoard with call-to-action buttons
-- **Stats Bar**: Key metrics (9 files modernized, 1,200+ lines of code, 545 lines of docs, ~8 hours saved)
-- **How It Works**: 3-step process overview (Analyze → Modernize → Deploy)
-- **Key Features**: Highlights of automated refactoring, dependency management, and comprehensive documentation
+The main landing page featuring:
+- **Hero Section**: Introduction to SpringBoard with repository URL input
+- **Repository Analysis**: Instant analysis of any Spring Boot repository
+- **Analysis Results**: Comprehensive report with version detection and issue identification
+- **Modernization Options**: Choose between viewing analysis or AI-powered refactoring
+
+### 📊 Reports Page (`/reports`)
+View detailed analysis reports including:
+- **Version Information**: Spring Boot and Java versions
+- **Dependency Analysis**: Complete list of Maven dependencies
+- **Migration Issues**: Identified problems and compatibility concerns
+- **Recommendations**: Actionable steps for modernization
+
+### 🔄 Modernize Page (`/modernize`)
+Advanced modernization options:
+- **View Analysis**: Review detailed analysis report (no authentication required)
+- **AI Refactoring**: Optional watsonx.ai-powered code modernization (requires API key)
+- **Token Input**: Secure GitHub token handling for private repositories
 
 ### 🎬 Demo Page (`/demo`)
-Interactive demonstration showing the 5-step modernization workflow:
-1. **Analysis Phase**: Codebase scanning and dependency mapping
-2. **Refactoring Phase**: Automated code updates with before/after diffs
-3. **Testing Phase**: Automated test generation and validation
-4. **Documentation Phase**: Changelog and deployment guide creation
-5. **Deployment Phase**: Docker containerization with health checks
-
-Each step includes:
-- Visual timeline with progress indicators
-- Code snippets showing actual changes
-- Before/after comparisons
-- Command examples
-
-### 📊 Report Page (`/report`)
-Comprehensive modernization dashboard displaying:
-- **Summary Statistics**: 
-  - Files modified: 9
-  - Lines changed: 1,200+
-  - Test coverage: 85%
-  - Time saved: ~8 hours
-- **Before/After Comparison Table**: Side-by-side comparison of key technologies
-- **Files Changed**: Detailed list of all modified files with risk levels
-- **Bob Sessions**: Information about the three development sessions
+Interactive demonstration showing:
+- How SpringBoard analyzes repositories
+- Example analysis results
+- Migration recommendations
+- Step-by-step modernization process
 
 ### 👥 Team Page (`/team`)
-Meet the SpringBoard team:
-- **Sam Yati** (Dev 1 - Senior Architect): Codebase analysis and architecture planning
+Meet the SpringBoard development team:
+- **Sam Yati** (Dev 1 - Analyst & Planner)
   - Email: samyati.syt@gmail.com
   - GitHub: @narattscoward
-- **Win Yu Maung** (Dev 2 - Lead Developer): Code refactoring and Spring Boot 3 migration
+  - Role: Codebase analysis and modernization planning
+- **Win Yu Maung** (Dev 2 - Full-Stack Developer)
   - Email: winyumg2003a@gmail.com
   - GitHub: @Kusk24
-- **Swan Htet Aung** (Dev 3 - QA Engineer): Testing, validation, and documentation
+  - Role: UI development and frontend implementation
+- **Swan Htet Aung** (Dev 3 - Backend & DevOps)
   - Email: swanhtetag09@gmail.com
   - GitHub: @swanhtetaung01
-
-Each team member card includes:
-- Role and responsibilities
-- Contact information (email, GitHub)
-- Key contributions to the project
-- IBM Bob mode used
+  - Role: API development, GitHub integration, CI/CD pipeline
 
 ## Project Structure
 
 ```
 springboard-ui/
-├── app/                    # Next.js 14 App Router
-│   ├── layout.tsx         # Root layout with metadata
-│   ├── page.tsx           # Home page
-│   ├── globals.css        # Global styles with IBM Blue theme
-│   ├── demo/              # Demo page
+├── app/                          # Next.js 14 App Router
+│   ├── layout.tsx               # Root layout with metadata
+│   ├── page.tsx                 # Home page with analysis
+│   ├── globals.css              # Global styles with IBM Blue theme
+│   ├── api/                     # API Routes
+│   │   ├── analyze/             # Repository analysis endpoint
+│   │   │   └── route.ts
+│   │   ├── refactor/            # Code refactoring endpoint
+│   │   │   └── route.ts
+│   │   └── ai-refactor/         # AI-powered refactoring
+│   │       └── route.ts
+│   ├── demo/                    # Demo page
 │   │   └── page.tsx
-│   ├── report/            # Report dashboard
+│   ├── modernize/               # Modernization options
 │   │   └── page.tsx
-│   └── team/              # Team members page
+│   ├── reports/                 # Analysis reports
+│   │   └── page.tsx
+│   └── team/                    # Team members page
 │       └── page.tsx
-├── components/            # React components
-│   ├── Navigation.tsx     # Header navigation
-│   ├── Footer.tsx         # Footer component
-│   └── ui/               # shadcn/ui components
-├── lib/                  # Utility functions
-│   └── utils.ts          # Helper utilities
-├── public/               # Static assets
-├── .env.local           # Environment variables
-├── next.config.mjs      # Next.js configuration
-├── tailwind.config.ts   # Tailwind CSS with IBM Blue
-├── tsconfig.json        # TypeScript configuration
-└── package.json         # Dependencies
+├── components/                  # React components
+│   ├── AnalysisResult.tsx      # Analysis display component
+│   ├── Navigation.tsx           # Header navigation
+│   ├── Footer.tsx               # Footer component
+│   ├── RefactorModal.tsx        # Refactoring modal
+│   ├── TokenInput.tsx           # Secure token input
+│   ├── TeamMemberAvatar.tsx     # Team member cards
+│   └── ui/                      # shadcn/ui components
+├── lib/                         # Utility functions and helpers
+│   ├── github.ts                # GitHub API integration
+│   ├── watsonx.ts               # IBM watsonx.ai integration
+│   ├── types.ts                 # TypeScript type definitions
+│   ├── env.ts                   # Environment variable validation
+│   ├── rateLimit.ts             # Rate limiting utilities
+│   ├── constants.ts             # Application constants
+│   └── utils.ts                 # Helper utilities
+├── middleware.ts                # Next.js middleware
+├── public/                      # Static assets
+├── .env.example                 # Environment variables template
+├── .env.local                   # Local environment variables (gitignored)
+├── next.config.mjs              # Next.js configuration
+├── tailwind.config.ts           # Tailwind CSS with IBM Blue
+├── tsconfig.json                # TypeScript configuration
+├── vercel.json                  # Vercel deployment config
+└── package.json                 # Dependencies
 ```
 
 ## Design System
@@ -166,11 +181,25 @@ The application uses IBM Blue (#0F62FE) as the primary brand color with a full c
 
 ## Key Features
 
+### 🔍 Repository Analysis
+- Instant analysis of any GitHub repository
+- Automatic Spring Boot and Java version detection
+- Complete dependency parsing from pom.xml
+- Migration issue identification
+- Multi-branch support (default, main, master)
+
 ### 🎨 Modern Design
-- Dark theme with IBM Blue accents
+- Dark theme with IBM Blue (#0F62FE) accents
 - Responsive layout for all screen sizes
 - Smooth transitions and hover effects
-- Professional gradient backgrounds
+- Professional, clean interface
+
+### 🔒 Security
+- Server-side only token handling
+- No tokens exposed to client
+- Secure API routes with validation
+- Rate limiting protection
+- CORS configuration
 
 ### 🧭 Navigation
 - Sticky header with logo and navigation links
@@ -186,15 +215,16 @@ The application uses IBM Blue (#0F62FE) as the primary brand color with a full c
 
 ### ⚡ Performance
 - Next.js 14 App Router for optimal performance
-- Static generation where possible
-- Optimized images and assets
+- Server-side rendering where beneficial
+- Optimized API routes
 - Fast page transitions
+- Smart caching strategies
 
 ## Security
 
 ### Environment Variables
 
-SpringBoard uses environment variables to securely manage sensitive credentials and configuration. **Never commit `.env.local` to version control.**
+SpringBoard uses environment variables to securely manage sensitive credentials. **Never commit `.env.local` to version control.**
 
 #### Setup
 
@@ -203,49 +233,51 @@ SpringBoard uses environment variables to securely manage sensitive credentials 
 cp .env.example .env.local
 ```
 
-2. Fill in your values in `.env.local`
+2. Fill in your values in `.env.local` (all optional for basic usage)
 
-#### Required Variables
+#### Optional Variables
 
 **Server-Side Only** (Never exposed to browser):
 
-- `GITHUB_TOKEN` - Your GitHub Personal Access Token
+- `GITHUB_TOKEN` - Your GitHub Personal Access Token (optional)
   - **Where to get it**: [Create token on GitHub](https://github.com/settings/tokens/new?scopes=repo&description=SpringBoard%20Analysis)
-  - **Minimum permissions**: `public_repo` (read access to public repositories)
-  - **Optional permissions**: `repo` (for private repositories)
-  - **Used for**: Fallback token to avoid rate limiting when users don't provide their own
+  - **Permissions needed**: `public_repo` (for public repos) or `repo` (for private repos)
+  - **Used for**: Fallback token to avoid rate limiting, access to private repositories
   - **Security**: Never logged, never sent to browser, only used in API routes
+  - **Note**: SpringBoard works without this for public repository analysis
 
-- `WATSONX_API_KEY` - IBM watsonx API key (optional, for future features)
+- `WATSONX_API_KEY` - IBM watsonx.ai API key (optional)
   - **Where to get it**: [IBM Cloud API Keys](https://cloud.ibm.com/)
-  - **Used for**: Full auto-modernization pipeline (coming soon)
+  - **Used for**: AI-powered code refactoring feature
 
-- `WATSONX_PROJECT_ID` - Your watsonx project ID (optional)
-  - **Where to find**: watsonx project settings
+- `WATSONX_PROJECT_ID` - Your watsonx.ai project ID (optional)
+  - **Where to find**: watsonx.ai project settings
 
-- `WATSONX_URL` - watsonx API endpoint (optional)
-  - **Example**: `https://us-south.ml.cloud.ibm.com`
+- `WATSONX_URL` - watsonx.ai API endpoint (optional)
+  - **Default**: `https://us-south.ml.cloud.ibm.com`
 
 **Public** (Safe for browser - has `NEXT_PUBLIC_` prefix):
 
-- `NEXT_PUBLIC_APP_URL` - Your application URL
+- `NEXT_PUBLIC_APP_URL` - Your application URL (optional)
   - **Development**: `http://localhost:3000`
-  - **Production**: `https://your-domain.vercel.app`
-  - **Used for**: CORS configuration and absolute URLs
+  - **Production**: `https://springboard-pink.vercel.app`
+  - **Used for**: CORS configuration
 
-#### Rate Limiting Configuration
+#### Rate Limiting Configuration (Optional)
 
-- `RATE_LIMIT_MAX` - Maximum requests per IP (default: 5)
+- `RATE_LIMIT_MAX` - Maximum requests per IP (default: 10)
 - `RATE_LIMIT_WINDOW_MS` - Time window in milliseconds (default: 60000 = 1 minute)
 
-### Creating a GitHub Token
+### Creating a GitHub Token (Optional)
+
+Only needed for private repositories or to avoid rate limits:
 
 1. Go to [GitHub Settings → Tokens](https://github.com/settings/tokens/new)
 2. Click "Generate new token (classic)"
 3. Give it a descriptive name: "SpringBoard Analysis"
 4. Select scopes:
-   - ✅ `public_repo` - For analyzing public repositories
-   - ✅ `repo` (optional) - For analyzing private repositories
+   - ✅ `public_repo` - For public repositories (sufficient for most use cases)
+   - ✅ `repo` (optional) - For private repositories
 5. Click "Generate token"
 6. Copy the token (starts with `ghp_`)
 7. Add to `.env.local`: `GITHUB_TOKEN=ghp_your_token_here`
@@ -256,6 +288,8 @@ cp .env.example .env.local
 - ✅ Never commit tokens to git
 - ✅ Use different tokens for development and production
 - ✅ Revoke tokens immediately if compromised
+
+**Note**: SpringBoard works perfectly without a token for analyzing public repositories!
 
 ### Server-Side vs Public Variables
 
@@ -315,10 +349,11 @@ npx shadcn-ui@latest add button
 ## Project Context
 
 This UI is part of the larger SpringBoard project that includes:
-- **Legacy Application**: Original Spring Boot 2 sample app
-- **Modernized Application**: Upgraded Spring Boot 3.1.5 version
-- **Documentation**: Analysis reports, modernization plans, changelogs
-- **This UI**: Showcase website for the modernization results
+- **Web Application**: Next.js 14 analysis platform (this directory)
+- **Legacy Application**: Original Spring Boot 2 sample app in [`legacy-app/`](../legacy-app/)
+- **Modernization Output**: Analysis reports and plans in [`modernization-output/`](../modernization-output/)
+- **Documentation**: Comprehensive guides and security documentation
+- **CI/CD Pipeline**: GitHub Actions workflows for automated deployment
 
 ## License
 
