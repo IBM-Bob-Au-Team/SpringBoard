@@ -101,14 +101,14 @@ export default function Home() {
                 🚀 AI-Powered Spring Boot Migration
               </span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
               Modernize Spring Boot 2 to 3,
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">
                 Faster with IBM Bob
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
               Paste your GitHub repository URL below to get instant analysis and modernization recommendations
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function Home() {
             <div className="space-y-6">
               {/* GitHub URL Input */}
               <div>
-                <label htmlFor="repoUrl" className="block text-lg font-semibold text-white mb-3">
+                <label htmlFor="repoUrl" className="block text-base font-semibold text-white mb-3">
                   GitHub Repository URL
                 </label>
                 <input
