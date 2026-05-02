@@ -1,20 +1,9 @@
+import Navigation from '@/components/Navigation';
+
 export default function ReportPage() {
   return (
     <div className="min-h-screen bg-[#161616] text-white">
-      {/* Header */}
-      <div className="border-b border-gray-800 bg-[#161616]/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <a href="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold text-white">SpringBoard</span>
-              <span className="text-2xl">⚡</span>
-            </a>
-            <a href="/" className="text-gray-400 hover:text-white transition-colors">
-              ← Back to Home
-            </a>
-          </div>
-        </div>
-      </div>
+      <Navigation />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-16">
