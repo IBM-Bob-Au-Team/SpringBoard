@@ -1,0 +1,79 @@
+name: Deploy to Production
+
+# Trigger this workflow on push to main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Build job - compiles and validates the application
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Step 2: Setup Node.js environment with version 20
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      # Step 3: Setup pnpm package manager
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      # Step 4: Install project dependencies
+      - name: Install dependencies
+        run: |
+          cd springboard-ui
+          pnpm install --frozen-lockfile
+      
+      # Step 5: Build the Next.js application
+      - name: Build application
+        run: |
+          cd springboard-ui
+          pnpm build
+      
+      # Step 6: Run TypeScript type checking
+      - name: Type check
+        run: |
+          cd springboard-ui
+          pnpm typecheck
+
+  # Deploy job - deploys to Vercel after successful build
+  deploy:
+    name: Deploy to Vercel
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Step 2: Deploy to Vercel production
+      # Requires three secrets to be set in GitHub repository settings:
+      # - VERCEL_TOKEN: Your Vercel authentication token
+      # - VERCEL_ORG_ID: Your Vercel organization ID
+      # - VERCEL_PROJECT_ID: Your Vercel project ID
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./springboard-ui
+          vercel-args: '--prod'
+      
+      # Step 3: Output deployment URL
+      - name: Deployment complete
+        run: echo "Deployment successful! Check Vercel dashboard for URL."
+
+# Made with Bob

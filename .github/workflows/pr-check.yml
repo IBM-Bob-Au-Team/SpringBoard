@@ -1,0 +1,79 @@
+name: Pull Request Checks
+
+# Trigger this workflow on pull requests targeting main branch
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Lint and build job - validates code quality and build success
+  lint-and-build:
+    name: Lint and Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout the PR code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Step 2: Setup Node.js environment with version 20
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      # Step 3: Setup pnpm package manager
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      
+      # Step 4: Install project dependencies
+      - name: Install dependencies
+        run: |
+          cd springboard-ui
+          pnpm install --frozen-lockfile
+      
+      # Step 5: Run ESLint to check code quality
+      - name: Run linter
+        run: |
+          cd springboard-ui
+          pnpm lint
+        continue-on-error: true
+      
+      # Step 6: Run TypeScript type checking
+      - name: Type check
+        run: |
+          cd springboard-ui
+          pnpm typecheck
+      
+      # Step 7: Build the Next.js application
+      - name: Build application
+        id: build
+        run: |
+          cd springboard-ui
+          pnpm build
+      
+      # Step 8: Comment on PR with build status
+      # This provides immediate feedback to the PR author
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const buildStatus = '${{ steps.build.outcome }}';
+            const emoji = buildStatus === 'success' ? '✅' : '❌';
+            const message = buildStatus === 'success' 
+              ? 'Build completed successfully!' 
+              : 'Build failed. Please check the logs.';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ${emoji} Build Status\n\n${message}\n\n**Build outcome:** ${buildStatus}\n\n[View workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+            });
+
+# Made with Bob
