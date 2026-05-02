@@ -198,18 +198,35 @@ export async function POST(request: NextRequest) {
     const repoData = await repoResponse.json();
     const defaultBranch = repoData.default_branch || 'main';
 
-    // Check if springboard-modernized branch exists
-    const branchCheckResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/git/ref/heads/springboard-modernized`,
-      { headers }
-    );
+    // Find available branch name (handle conflicts automatically)
+    let branchName = 'springboard-modernized';
+    let branchExists = true;
+    let attemptCount = 0;
+    const maxAttempts = 10;
 
-    if (branchCheckResponse.ok) {
+    while (branchExists && attemptCount < maxAttempts) {
+      const branchCheckResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/ref/heads/${branchName}`,
+        { headers }
+      );
+
+      if (!branchCheckResponse.ok) {
+        // Branch doesn't exist, we can use this name
+        branchExists = false;
+      } else {
+        // Branch exists, try with timestamp
+        attemptCount++;
+        const timestamp = Date.now();
+        branchName = `springboard-modernized-${timestamp}`;
+      }
+    }
+
+    if (attemptCount >= maxAttempts) {
       return NextResponse.json(
         {
-          error: 'Branch "springboard-modernized" already exists. Please delete it first.',
+          error: 'Unable to create a unique branch name. Please try again later.',
         },
-        { status: 409 }
+        { status: 500 }
       );
     }
 
@@ -229,7 +246,7 @@ export async function POST(request: NextRequest) {
     const refData = await refResponse.json();
     const defaultSha = refData.object.sha;
 
-    // Create new branch
+    // Create new branch with the available name
     const createBranchResponse = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/git/refs`,
       {
@@ -239,7 +256,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ref: 'refs/heads/springboard-modernized',
+          ref: `refs/heads/${branchName}`,
           sha: defaultSha,
         }),
       }
@@ -271,7 +288,7 @@ export async function POST(request: NextRequest) {
           message: 'chore: upgrade to Spring Boot 3.1.5 and Java 17',
           content: Buffer.from(refactoredPom).toString('base64'),
           sha: pomData.sha,
-          branch: 'springboard-modernized',
+          branch: branchName,
         }),
       }
     );
@@ -302,7 +319,7 @@ export async function POST(request: NextRequest) {
             message: `refactor: migrate ${javaFile.path} to Spring Boot 3`,
             content: Buffer.from(refactoredJava).toString('base64'),
             sha: javaFile.sha,
-            branch: 'springboard-modernized',
+            branch: branchName,
           }),
         }
       );
@@ -334,7 +351,7 @@ export async function POST(request: NextRequest) {
             message: 'chore: update Dockerfile for Java 17',
             content: Buffer.from(refactoredDocker).toString('base64'),
             sha: dockerfileSha,
-            branch: 'springboard-modernized',
+            branch: branchName,
           }),
         }
       );
@@ -366,7 +383,7 @@ export async function POST(request: NextRequest) {
             message: 'chore: update application properties for Spring Boot 3',
             content: Buffer.from(refactoredProps).toString('base64'),
             sha: propertiesSha,
-            branch: 'springboard-modernized',
+            branch: branchName,
           }),
         }
       );
@@ -382,9 +399,9 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         filesRefactored: changes.length,
-        branch: 'springboard-modernized',
-        branchUrl: `https://github.com/${owner}/${repo}/tree/springboard-modernized`,
-        prUrl: `https://github.com/${owner}/${repo}/compare/springboard-modernized`,
+        branch: branchName,
+        branchUrl: `https://github.com/${owner}/${repo}/tree/${branchName}`,
+        prUrl: `https://github.com/${owner}/${repo}/compare/${branchName}`,
         changes,
       },
       {
