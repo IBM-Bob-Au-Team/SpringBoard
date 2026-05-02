@@ -20,9 +20,23 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
 
+/**
+ * Custom health indicator that provides application health status information.
+ * This component is automatically registered with Spring Boot Actuator and contributes
+ * to the overall health endpoint response.
+ *
+ * @author Spring Boot Team
+ * @since 3.1.5
+ */
 @Component
 public class ExampleHealthIndicator implements HealthIndicator {
 
+	/**
+	 * Performs a health check and returns the health status.
+	 * This implementation always returns UP status with a counter detail.
+	 *
+	 * @return Health object containing the status and additional details
+	 */
 	@Override
 	public Health health() {
 		return Health.up().withDetail("counter", 42).build();

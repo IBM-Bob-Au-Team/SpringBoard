@@ -21,7 +21,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 import org.springframework.context.annotation.Description;
 import org.springframework.http.MediaType;
@@ -32,16 +32,33 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+/**
+ * REST controller for handling hello message requests.
+ * Provides endpoints for retrieving and posting hello messages.
+ *
+ * @author Spring Boot Team
+ * @since 3.1.5
+ */
 @Controller
 @Description("A controller for handling requests for hello messages")
 public class SampleController {
 
 	private final HelloWorldService helloWorldService;
 
+	/**
+	 * Constructs a new SampleController with the specified HelloWorldService.
+	 *
+	 * @param helloWorldService the service used to generate hello messages
+	 */
 	public SampleController(HelloWorldService helloWorldService) {
 		this.helloWorldService = helloWorldService;
 	}
 
+	/**
+	 * Handles GET requests to the root endpoint and returns a hello message.
+	 *
+	 * @return a map containing the hello message from the service
+	 */
 	@GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public Map<String, String> hello() {
@@ -49,6 +66,13 @@ public class SampleController {
 				this.helloWorldService.getHelloMessage());
 	}
 
+	/**
+	 * Handles POST requests to the root endpoint with a validated message.
+	 * Returns a response containing the message, title, and current date.
+	 *
+	 * @param message the validated message object from the request body
+	 * @return a map containing the message details, title, and timestamp
+	 */
 	@PostMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseBody
 	public Map<String, Object> olleh(@Validated Message message) {
@@ -59,21 +83,41 @@ public class SampleController {
 		return model;
 	}
 
+	/**
+	 * Test endpoint that always throws an exception.
+	 * Used for testing error handling and monitoring.
+	 *
+	 * @return never returns normally
+	 * @throws IllegalArgumentException always thrown to simulate a server error
+	 */
 	@RequestMapping("/foo")
 	@ResponseBody
 	public String foo() {
 		throw new IllegalArgumentException("Server error");
 	}
 
+	/**
+	 * Inner class representing a message with validation constraints.
+	 */
 	protected static class Message {
 
 		@NotBlank(message = "Message value cannot be empty")
 		private String value;
 
+		/**
+		 * Gets the message value.
+		 *
+		 * @return the message value
+		 */
 		public String getValue() {
 			return this.value;
 		}
 
+		/**
+		 * Sets the message value.
+		 *
+		 * @param value the message value to set
+		 */
 		public void setValue(String value) {
 			this.value = value;
 		}
