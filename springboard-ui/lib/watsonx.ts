@@ -43,10 +43,13 @@ export async function getIAMToken(apiKey: string): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get IAM token: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('[IAM] Failed to get IAM token:', response.status, errorText);
+      throw new Error(`Failed to get IAM token (${response.status}): ${response.statusText}`);
     }
 
     const data: IAMTokenResponse = await response.json();
+    console.log('[IAM] Successfully obtained IAM token');
 
     // Cache token for 50 minutes (expires in 60)
     const expiresAt = Date.now() + 50 * 60 * 1000;
@@ -72,45 +75,82 @@ export async function callGranite(
   watsonxUrl: string = 'https://us-south.ml.cloud.ibm.com'
 ): Promise<string> {
   try {
-    const response = await fetch(
-      `${watsonxUrl}/ml/v1/text/generation?version=2023-05-29`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${iamToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          model_id: 'ibm/granite-13b-instruct-v2',
-          input: prompt,
-          parameters: {
-            decoding_method: 'greedy',
-            max_new_tokens: 2000,
-            temperature: 0,
-            stop_sequences: [],
-          },
-          project_id: projectId,
-        }),
-      }
-    );
+    // Debug logging
+    const endpoint = `${watsonxUrl}/ml/v1/text/generation?version=2023-05-29`;
+    console.log('[Granite] Calling Granite with model: ibm/granite-13b-instruct-v2');
+    console.log('[Granite] Project ID set:', !!projectId);
+    console.log('[Granite] Endpoint:', endpoint);
+    console.log('[Granite] IAM token present:', !!iamToken);
+    
+    const requestBody = {
+      model_id: 'ibm/granite-13b-instruct-v2',
+      input: prompt,
+      parameters: {
+        decoding_method: 'greedy',
+        max_new_tokens: 2000,
+        min_new_tokens: 1,
+        stop_sequences: [],
+        repetition_penalty: 1,
+      },
+      project_id: projectId,
+    };
+    
+    console.log('[Granite] Request body:', JSON.stringify(requestBody, null, 2));
+    
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${iamToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    
+    console.log('[Granite] Response status:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Watsonx API error:', errorText);
-      throw new Error(`Watsonx API error: ${response.statusText}`);
+      console.error('[Granite] Watsonx API error:', response.status, errorText);
+      
+      // Provide more specific error messages
+      if (response.status === 401) {
+        throw new Error('IBM watsonx.ai authentication failed (401). The IAM token is invalid or expired. Please check your API key.');
+      } else if (response.status === 403) {
+        throw new Error('IBM watsonx.ai access forbidden (403). Your API key does not have permission to access this project.');
+      } else if (response.status === 404) {
+        throw new Error('IBM watsonx.ai project not found (404). Please verify your project ID is correct.');
+      } else if (response.status === 429) {
+        throw new Error('IBM watsonx.ai rate limit exceeded (429). Please try again later or provide your own API key.');
+      } else if (response.status === 400) {
+        throw new Error(`IBM watsonx.ai bad request (400): ${errorText}. Check the request format.`);
+      } else {
+        throw new Error(`IBM watsonx.ai error (${response.status}): ${errorText || response.statusText}`);
+      }
     }
 
     const data: WatsonxGenerationResponse = await response.json();
+    console.log('[Granite] Response received, results count:', data.results?.length || 0);
 
     if (!data.results || data.results.length === 0) {
-      throw new Error('No results from Granite model');
+      console.error('[Granite] No results in response:', JSON.stringify(data));
+      throw new Error('IBM Granite model returned no results. Please try again.');
     }
 
-    return data.results[0].generated_text.trim();
+    const generatedText = data.results[0].generated_text.trim();
+    console.log('[Granite] Generated text length:', generatedText.length);
+    
+    return generatedText;
   } catch (error) {
-    console.error('Error calling Granite model:', error);
-    throw new Error('Failed to generate code with IBM Granite');
+    console.error('[Granite] Error calling Granite model:', error);
+    
+    // Re-throw with original message if it's already a specific error
+    if (error instanceof Error && error.message.includes('watsonx')) {
+      throw error;
+    }
+    
+    // Generic fallback error
+    throw new Error('Failed to generate code with IBM Granite. Please check your API credentials and try again.');
   }
 }
 
