@@ -14,8 +14,8 @@ export default function Navigation() {
             <a href="/demo" className="text-gray-300 hover:text-white transition-colors">
               Demo
             </a>
-            <a href="/report" className="text-gray-300 hover:text-white transition-colors">
-              Report
+            <a href="/reports" className="text-gray-300 hover:text-white transition-colors">
+              Reports
             </a>
             <a href="/team" className="text-gray-300 hover:text-white transition-colors">
               Team

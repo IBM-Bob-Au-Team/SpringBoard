@@ -30,8 +30,8 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="/report" className="text-gray-400 hover:text-primary transition-colors text-sm">
-                  Report
+                <a href="/reports" className="text-gray-400 hover:text-primary transition-colors text-sm">
+                  Reports
                 </a>
               </li>
               <li>

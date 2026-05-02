@@ -1,5 +1,6 @@
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { GITHUB_REPO_URL } from '@/lib/constants';
 
 export default function DemoPage() {
   return (
@@ -9,13 +10,26 @@ export default function DemoPage() {
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="text-center mb-16">
+          <div className="inline-block px-4 py-2 bg-primary/20 border border-primary/30 rounded-full text-primary text-sm font-medium mb-4">
+            🎬 Live Demo
+          </div>
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             SpringBoard in Action
           </h1>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Watch how IBM Bob modernizes a Spring Boot 2 application to Spring Boot 3 
-            in 5 automated steps
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto mb-4">
+            This is what SpringBoard did to modernize our own legacy Spring Boot 2 application
           </p>
+          <a 
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors"
+          >
+            <span className="text-sm">View Repository:</span>
+            <code className="text-sm bg-primary/10 px-3 py-1 rounded">
+              IBM-Bob-Au-Team/spring-boot-2-sample-app
+            </code>
+          </a>
         </div>
 
         {/* Timeline */}
@@ -36,18 +50,18 @@ export default function DemoPage() {
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-green-500 text-2xl">✓</span>
-                    <h3 className="text-2xl font-bold">Bob Analyzes the Legacy Codebase</h3>
+                    <h3 className="text-2xl font-bold">Step 1: Analyze Legacy Codebase</h3>
                   </div>
                   <p className="text-gray-400 leading-relaxed">
-                    IBM Bob reads every file in the Spring Boot 2 project and identifies 
-                    outdated dependencies, deprecated APIs, javax imports, and missing tests
+                    IBM Bob scanned our Spring Boot 2.0.2 project and identified outdated dependencies, 
+                    deprecated APIs, and Java 8 limitations
                   </p>
                 </div>
               </div>
 
               {/* Code snippet */}
               <div className="mt-6 bg-[#0d1117] border border-gray-800 rounded-lg p-4 overflow-x-auto">
-                <div className="text-xs text-gray-500 mb-2">legacy-app/pom.xml</div>
+                <div className="text-xs text-gray-500 mb-2">legacy-app/pom.xml (Before)</div>
                 <pre className="text-sm text-gray-300 font-mono">
 {`<parent>
   <groupId>org.springframework.boot</groupId>
@@ -61,10 +75,10 @@ export default function DemoPage() {
                 </pre>
               </div>
 
-              <div className="mt-4 flex items-center space-x-2 text-sm text-gray-500">
+              <div className="mt-4 flex flex-wrap gap-2 text-sm">
                 <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full">Outdated</span>
                 <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full">Java 8</span>
-                <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full">Spring Boot 2.x</span>
+                <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full">Spring Boot 2.0.2</span>
               </div>
             </div>
           </div>
@@ -82,10 +96,10 @@ export default function DemoPage() {
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-green-500 text-2xl">✓</span>
-                    <h3 className="text-2xl font-bold">Bob Creates a Modernization Plan</h3>
+                    <h3 className="text-2xl font-bold">Step 2: Create Modernization Plan</h3>
                   </div>
                   <p className="text-gray-400 leading-relaxed">
-                    Bob generates a prioritized plan with risk levels for each change needed
+                    Bob generated a prioritized plan with risk assessment for each required change
                   </p>
                 </div>
               </div>
@@ -114,7 +128,7 @@ export default function DemoPage() {
                       <td className="px-4 py-3">
                         <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-medium">Critical</span>
                       </td>
-                      <td className="px-4 py-3">Java 11 to Java 17</td>
+                      <td className="px-4 py-3">Java 8 to Java 17</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs">Medium</span>
                       </td>
@@ -132,7 +146,7 @@ export default function DemoPage() {
                       <td className="px-4 py-3">
                         <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-medium">Nice to have</span>
                       </td>
-                      <td className="px-4 py-3">Add missing Javadoc</td>
+                      <td className="px-4 py-3">Add comprehensive Javadoc</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">Low</span>
                       </td>
@@ -156,10 +170,10 @@ export default function DemoPage() {
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-green-500 text-2xl">✓</span>
-                    <h3 className="text-2xl font-bold">Bob Refactors the Code</h3>
+                    <h3 className="text-2xl font-bold">Step 3: Refactor the Code</h3>
                   </div>
                   <p className="text-gray-400 leading-relaxed">
-                    Bob automatically updates all files - pom.xml, Java classes, Dockerfile, application.properties
+                    Bob automatically updated pom.xml, 6 Java classes, Dockerfile, and application.properties
                   </p>
                 </div>
               </div>
@@ -217,10 +231,10 @@ FROM eclipse-temurin:17-jdk-alpine`}
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-green-500 text-2xl">✓</span>
-                    <h3 className="text-2xl font-bold">Bob Generates Tests</h3>
+                    <h3 className="text-2xl font-bold">Step 4: Generate Tests</h3>
                   </div>
                   <p className="text-gray-400 leading-relaxed">
-                    Bob writes JUnit 5 tests with Mockito for all refactored components
+                    Bob wrote JUnit 5 tests with Mockito for all refactored components
                   </p>
                 </div>
               </div>
@@ -233,11 +247,6 @@ FROM eclipse-temurin:17-jdk-alpine`}
                     <span className="text-green-500">✓</span>
                     <span className="text-gray-300 font-mono">HelloWorldServiceTest.java</span>
                     <span className="text-xs text-gray-500">3 tests</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <span className="text-green-500">✓</span>
-                    <span className="text-gray-300 font-mono">SampleControllerTest.java</span>
-                    <span className="text-xs text-gray-500">5 tests</span>
                   </div>
                   <div className="flex items-center space-x-3 text-sm">
                     <span className="text-green-500">✓</span>
@@ -256,7 +265,7 @@ FROM eclipse-temurin:17-jdk-alpine`}
                 <div className="flex items-center space-x-2 text-green-400">
                   <span className="text-xl">✓</span>
                   <span className="font-semibold">All tests passing</span>
-                  <span className="text-sm text-gray-400">14/14 tests</span>
+                  <span className="text-sm text-gray-400">9/9 tests</span>
                 </div>
               </div>
             </div>
@@ -273,10 +282,10 @@ FROM eclipse-temurin:17-jdk-alpine`}
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-green-500 text-2xl">✓</span>
-                    <h3 className="text-2xl font-bold">Ready to Deploy</h3>
+                    <h3 className="text-2xl font-bold">Step 5: Ready to Deploy</h3>
                   </div>
                   <p className="text-gray-400 leading-relaxed">
-                    The modernized app is ready for Docker deployment with Java 17
+                    The modernized app is production-ready with Java 17 and Docker support
                   </p>
                 </div>
               </div>
@@ -316,7 +325,7 @@ FROM eclipse-temurin:17-jdk-alpine`}
         {/* Summary Stats */}
         <div className="mt-16 max-w-4xl mx-auto">
           <div className="bg-gradient-to-br from-primary/10 to-transparent border border-primary/30 rounded-2xl p-8">
-            <h3 className="text-2xl font-bold mb-6 text-center">Migration Complete</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center">Our Modernization Results</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary mb-2">5/5</div>
@@ -339,12 +348,13 @@ FROM eclipse-temurin:17-jdk-alpine`}
         </div>
 
         {/* CTA */}
-        <div className="mt-12 text-center">
+        <div className="mt-12 text-center space-y-4">
+          <p className="text-xl text-gray-400">Ready to modernize your own Spring Boot application?</p>
           <a 
-            href="/#report" 
+            href="/" 
             className="inline-block px-8 py-4 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg shadow-primary/25"
           >
-            View Full Report
+            Try with Your Own Repository
           </a>
         </div>
       </div>

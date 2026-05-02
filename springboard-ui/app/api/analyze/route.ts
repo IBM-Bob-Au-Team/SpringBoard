@@ -65,18 +65,28 @@ export async function POST(request: NextRequest) {
 
     const { owner, repo } = parsed;
 
-    // SECURITY: Use server env token as fallback ONLY if user didn't provide one
-    // User token takes precedence for their private repos
-    const authToken = token || process.env.GITHUB_TOKEN;
-
     // SECURITY: Log server-side only (never log tokens)
     console.log(`[Server] Analyzing repository: ${owner}/${repo}`);
 
-    // Check repository access
-    const accessResult = await checkRepoAccess(owner, repo, authToken);
+    // Try without token first for public repos
+    let authToken = token || undefined;
+    let accessResult = await checkRepoAccess(owner, repo, authToken);
 
-    if (!accessResult.accessible) {
-      // SECURITY: Return safe error message (no token info)
+    // If access failed and no user token was provided, check if it needs a token
+    if (!accessResult.accessible && !token) {
+      // Check if it's a 401/403 (needs authentication)
+      if (accessResult.error?.includes('401') || accessResult.error?.includes('403') || accessResult.error?.includes('Not Found')) {
+        // Return needsToken flag to prompt user
+        return NextResponse.json(
+          {
+            needsToken: true,
+            error: 'This repository requires authentication. Please provide a GitHub token.',
+          },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+      
+      // Other errors - return generic error
       return NextResponse.json(
         {
           accessible: false,
@@ -87,6 +97,23 @@ export async function POST(request: NextRequest) {
           issues: [],
           recommendation: '',
           error: accessResult.error || 'Unable to access repository',
+        } as AnalysisResult,
+        { headers: corsHeaders }
+      );
+    }
+
+    // If still not accessible with user token, return error
+    if (!accessResult.accessible) {
+      return NextResponse.json(
+        {
+          accessible: false,
+          repoName: repo,
+          repoUrl: sanitized,
+          isPrivate: false,
+          needsMigration: false,
+          issues: [],
+          recommendation: '',
+          error: accessResult.error || 'Unable to access repository. Please check your token permissions.',
         } as AnalysisResult,
         { headers: corsHeaders }
       );
