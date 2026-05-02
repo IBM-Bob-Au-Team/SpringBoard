@@ -184,13 +184,112 @@ The application uses IBM Blue (#0F62FE) as the primary brand color with a full c
 - Optimized images and assets
 - Fast page transitions
 
-## Environment Variables
+## Security
 
-Create a `.env.local` file in the root directory:
+### Environment Variables
 
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8080
+SpringBoard uses environment variables to securely manage sensitive credentials and configuration. **Never commit `.env.local` to version control.**
+
+#### Setup
+
+1. Copy the example file:
+```bash
+cp .env.example .env.local
 ```
+
+2. Fill in your values in `.env.local`
+
+#### Required Variables
+
+**Server-Side Only** (Never exposed to browser):
+
+- `GITHUB_TOKEN` - Your GitHub Personal Access Token
+  - **Where to get it**: [Create token on GitHub](https://github.com/settings/tokens/new?scopes=repo&description=SpringBoard%20Analysis)
+  - **Minimum permissions**: `public_repo` (read access to public repositories)
+  - **Optional permissions**: `repo` (for private repositories)
+  - **Used for**: Fallback token to avoid rate limiting when users don't provide their own
+  - **Security**: Never logged, never sent to browser, only used in API routes
+
+- `WATSONX_API_KEY` - IBM watsonx API key (optional, for future features)
+  - **Where to get it**: [IBM Cloud API Keys](https://cloud.ibm.com/)
+  - **Used for**: Full auto-modernization pipeline (coming soon)
+
+- `WATSONX_PROJECT_ID` - Your watsonx project ID (optional)
+  - **Where to find**: watsonx project settings
+
+- `WATSONX_URL` - watsonx API endpoint (optional)
+  - **Example**: `https://us-south.ml.cloud.ibm.com`
+
+**Public** (Safe for browser - has `NEXT_PUBLIC_` prefix):
+
+- `NEXT_PUBLIC_APP_URL` - Your application URL
+  - **Development**: `http://localhost:3000`
+  - **Production**: `https://your-domain.vercel.app`
+  - **Used for**: CORS configuration and absolute URLs
+
+#### Rate Limiting Configuration
+
+- `RATE_LIMIT_MAX` - Maximum requests per IP (default: 5)
+- `RATE_LIMIT_WINDOW_MS` - Time window in milliseconds (default: 60000 = 1 minute)
+
+### Creating a GitHub Token
+
+1. Go to [GitHub Settings → Tokens](https://github.com/settings/tokens/new)
+2. Click "Generate new token (classic)"
+3. Give it a descriptive name: "SpringBoard Analysis"
+4. Select scopes:
+   - ✅ `public_repo` - For analyzing public repositories
+   - ✅ `repo` (optional) - For analyzing private repositories
+5. Click "Generate token"
+6. Copy the token (starts with `ghp_`)
+7. Add to `.env.local`: `GITHUB_TOKEN=ghp_your_token_here`
+
+**Security Best Practices:**
+- ✅ Use minimum required permissions
+- ✅ Rotate tokens regularly
+- ✅ Never commit tokens to git
+- ✅ Use different tokens for development and production
+- ✅ Revoke tokens immediately if compromised
+
+### Server-Side vs Public Variables
+
+**Server-Side Only** (No `NEXT_PUBLIC_` prefix):
+- Only accessible in API routes and server components
+- Never sent to the browser
+- Used for sensitive credentials (tokens, API keys)
+- Examples: `GITHUB_TOKEN`, `WATSONX_API_KEY`
+
+**Public** (Has `NEXT_PUBLIC_` prefix):
+- Accessible in both server and client code
+- Sent to the browser (visible in source code)
+- Only use for non-sensitive configuration
+- Example: `NEXT_PUBLIC_APP_URL`
+
+### Production Deployment
+
+When deploying to Vercel:
+
+1. Go to your project settings
+2. Navigate to "Environment Variables"
+3. Add all variables from `.env.local`
+4. Use different tokens for production
+5. Never use development tokens in production
+
+### Security Notes
+
+⚠️ **NEVER**:
+- Commit `.env.local` to git (it's in `.gitignore`)
+- Log or expose tokens in code
+- Use `NEXT_PUBLIC_` prefix for sensitive data
+- Hardcode secrets in source code
+- Share tokens in screenshots or documentation
+
+✅ **ALWAYS**:
+- Use environment variables for secrets
+- Keep `.env.local` secure and private
+- Use minimum required permissions
+- Rotate tokens regularly
+- Use different tokens for dev/prod
 
 ## Adding shadcn/ui Components
 
