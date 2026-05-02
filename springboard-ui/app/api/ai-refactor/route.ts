@@ -94,7 +94,40 @@ export async function POST(request: NextRequest) {
     // Step 1: Get IAM token for watsonx.ai
     const iamToken = await getIAMToken(watsonxKey);
 
-    // Step 2: Fetch repository files from GitHub
+    // Step 2: Verify repository access first
+    const repoCheckResponse = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${githubToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'SpringBoard-AI-Modernization',
+        },
+      }
+    );
+
+    if (!repoCheckResponse.ok) {
+      let errorMessage = 'Unable to access repository. ';
+      
+      if (repoCheckResponse.status === 401) {
+        errorMessage += 'GitHub token is invalid or expired.';
+      } else if (repoCheckResponse.status === 403) {
+        errorMessage += 'GitHub token does not have permission to access this repository.';
+      } else if (repoCheckResponse.status === 404) {
+        errorMessage += 'Repository not found or token does not have access.';
+      } else {
+        errorMessage += `GitHub API error (${repoCheckResponse.status}).`;
+      }
+      
+      console.error(`[Server] Repository access failed: ${repoCheckResponse.status}`);
+      
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: repoCheckResponse.status }
+      );
+    }
+
+    // Step 3: Fetch repository files from GitHub
     const headers = {
       'Authorization': `Bearer ${githubToken}`,
       'Accept': 'application/vnd.github.v3+json',
@@ -102,17 +135,35 @@ export async function POST(request: NextRequest) {
     };
 
     // Fetch pom.xml
+    console.log(`[Server] Fetching pom.xml from ${owner}/${repo}`);
     const pomResponse = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/pom.xml`,
       { headers }
     );
 
     if (!pomResponse.ok) {
+      const errorText = await pomResponse.text();
+      console.error(`[Server] Failed to fetch pom.xml: ${pomResponse.status} - ${errorText}`);
+      
+      let errorMessage = 'Failed to fetch pom.xml. ';
+      
+      if (pomResponse.status === 404) {
+        errorMessage += 'The pom.xml file was not found in the repository root. Please ensure it exists at the root level.';
+      } else if (pomResponse.status === 401) {
+        errorMessage += 'GitHub token authentication failed. Please check your token.';
+      } else if (pomResponse.status === 403) {
+        errorMessage += 'Access denied. Make sure your GitHub token has "repo" scope with read permissions.';
+      } else {
+        errorMessage += `GitHub API returned status ${pomResponse.status}. Please try again.`;
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to fetch pom.xml. Make sure the repository has a pom.xml file.' },
-        { status: 404 }
+        { error: errorMessage, details: errorText },
+        { status: pomResponse.status }
       );
     }
+
+    console.log(`[Server] Successfully fetched pom.xml`);
 
     const pomData: GitHubFile = await pomResponse.json();
     const pomContent = Buffer.from(pomData.content || '', 'base64').toString('utf-8');
