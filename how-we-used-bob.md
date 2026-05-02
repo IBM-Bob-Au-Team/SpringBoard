@@ -19,60 +19,81 @@
 
 ## 👥 Team Usage Breakdown
 
-### **Developer 1** - Full-Stack Lead
+### **Developer 1 (Sam Yati)** - Documentation & Analysis Lead
 
 #### **Bob Modes Used**:
-- 📝 **Plan Mode** (60% of time)
-- 🛠️ **Ask Mode** (40% of time)
+- 📝 **Plan Mode** (50% of time)
+- 🛠️ **Advanced Mode** (40% of time)
+- ❓ **Ask Mode** (10% of time)
 
 #### **Key Tasks with Bob**:
 
-1. **Initial Project Setup** (Code Mode)
+1. **Legacy Application Analysis** (Advanced Mode)
    ```
-   Prompt: "Create a Next.js 14 app with TypeScript, Tailwind CSS, 
-   and proper folder structure for a Spring Boot migration tool"
+   Prompt: "Analyze the Spring Boot 2.x application. Read pom.xml and all
+   source files. Tell me current versions, outdated dependencies, javax.*
+   imports needing jakarta.*, deprecated patterns, missing test coverage,
+   and Docker/deployment risks. Write full analysis to ANALYSIS_REPORT.md"
    
-   Result: Complete project scaffold with:
-   - Next.js 14 App Router setup
-   - TypeScript configuration
-   - Tailwind CSS with custom theme
-   - Component structure
-   Time Saved: 2 hours
-   ```
-
-2. **GitHub API Integration** (Advanced Mode)
-   ```
-   Prompt: "Build a GitHub repo analyzer that fetches pom.xml, 
-   parses Spring Boot version, Java version, and dependencies. 
-   Handle rate limiting and private repos."
-   
-   Result: Complete helper library (lib/github.ts) with:
-   - parseGitHubUrl() - handles any URL format
-   - checkRepoAccess() - with rate limit detection
-   - fetchPomXml() - retrieves Maven config
-   - parsePomXml() - extracts versions
-   - detectIssues() - identifies problems
+   Result: Comprehensive 283-line analysis report with:
+   - Application overview and purpose
+   - Current Spring Boot 2.0.2 and Java 1.8 versions
+   - All 10 dependencies documented with versions
+   - javax.* to jakarta.* migration requirements
+   - Deprecated API patterns identified
+   - Risk assessment with mitigation strategies
    Time Saved: 6 hours
    ```
 
-3. **UI Components** (Code Mode)
+2. **Modernization Planning** (Plan Mode)
    ```
-   Prompt: "Create an AnalysisResult component that shows repo info, 
-   highlights Spring Boot 2.x in red, Java <17 in yellow, lists issues, 
-   and has action buttons"
+   Prompt: "Based on the analysis, create a detailed modernization plan
+   for upgrading to Spring Boot 3.x. Structure as Priority 1 (critical),
+   Priority 2 (important), Priority 3 (nice to have). Include file changes,
+   reasons, and risk levels. Add before/after summary table."
    
-   Result: Production-ready component with:
-   - Error states (red card for inaccessible repos)
-   - Warning states (yellow card for non-Spring Boot)
-   - Success states with color-coded versions
-   - Responsive design with Tailwind
-   Time Saved: 4 hours
+   Result: Complete 449-line modernization plan with:
+   - 6 phases with prioritized steps
+   - Risk levels for each task (Low/Medium/High)
+   - Timeline estimation (~2 days)
+   - Success metrics and rollback plan
+   - Before/after comparison table
+   Time Saved: 5 hours
+   ```
+
+3. **Documentation Suite Creation** (Advanced Mode)
+   ```
+   Prompt: "Update all modernization-output files for hackathon submission:
+   - CHANGELOG.md with actual changes (Spring Boot 2→3, Java 8→17, javax→jakarta)
+   - DEPLOYMENT_GUIDE.md with Maven/Docker build and run commands
+   - TEST_REPORT.md with test files, coverage, and results
+   Also rewrite CI-CD-SETUP.md with Vercel deployment info"
+   
+   Result: Professional documentation suite:
+   - 283-line CHANGELOG.md documenting all changes
+   - 598-line DEPLOYMENT_GUIDE.md with complete instructions
+   - 598-line TEST_REPORT.md analyzing 3 test files
+   - Updated CI-CD-SETUP.md with environment variables
+   Time Saved: 8 hours
+   ```
+
+4. **UI Enhancement** (Advanced Mode)
+   ```
+   Prompt: "In springboard-ui team page, the icons for mail, github,
+   and linkedin have no labels. Fix that UI to have labels under icons."
+   
+   Result: Enhanced team page with:
+   - Text labels added under each contact icon
+   - Improved layout with flexbox (vertical icon+label pairs)
+   - Better spacing and readability
+   - Maintained hover effects and transitions
+   Time Saved: 30 minutes
    ```
 
 #### **Most Impactful Prompts**:
-- "Build a real GitHub repo analyzer feature" → Complete feature in one session
-- "Create helper functions for GitHub API" → Reusable, tested code
-- "Add proper TypeScript types for everything" → Type-safe codebase
+- "Analyze legacy Spring Boot app and write full analysis report" → Comprehensive technical analysis
+- "Create detailed modernization plan with priorities and risks" → Clear migration roadmap
+- "Update all documentation files with real project details" → Professional hackathon submission
 
 ---
 

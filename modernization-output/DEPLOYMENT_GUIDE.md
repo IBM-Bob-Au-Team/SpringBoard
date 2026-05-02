@@ -1,400 +1,423 @@
-# Spring Boot 3.x Deployment Guide
+# Deployment Guide - Modernized Spring Boot Application
 
 ## Overview
-This guide provides comprehensive instructions for building, testing, and deploying the modernized Spring Boot 3.1.5 Actuator sample application using Docker.
 
----
+This guide provides instructions for building, running, and deploying the modernized Spring Boot 3.1.5 application with Java 17.
 
 ## Prerequisites
 
 ### Required Software
-- **Java 17** or higher (JDK)
-- **Maven 3.9+** (for local builds)
-- **Docker 20.10+** (for containerized deployment)
-- **Docker Compose 2.0+** (optional, for orchestration)
+- **Java 17 JDK** (OpenJDK or Eclipse Temurin recommended)
+- **Maven 3.6+** for building the application
+- **Docker** (optional, for containerized deployment)
+- **Git** for version control
 
-### Verify Prerequisites
+### Verify Installation
+
 ```bash
-# Check Java version
+# Check Java version (must be 17)
 java -version
-# Should show: openjdk version "17.x.x" or higher
 
-# Check Maven version
+# Check Maven version (must be 3.6+)
 mvn -version
-# Should show: Apache Maven 3.9.x or higher
 
-# Check Docker version
+# Check Docker version (optional)
 docker --version
-# Should show: Docker version 20.10.x or higher
-
-# Check Docker Compose version (optional)
-docker compose version
-# Should show: Docker Compose version 2.x.x or higher
 ```
 
----
+Expected Java output:
+```
+openjdk version "17.0.x" or
+Eclipse Temurin version "17.0.x"
+```
 
-## Local Development Build
+## Local Development Setup
 
-### 1. Build with Maven
+### 1. Clone the Repository
+
 ```bash
-# Navigate to project directory
-cd legacy-app/spring-boot-2-sample-app
+git clone <repository-url>
+cd SpringBoard/legacy-app/spring-boot-2-sample-app
+```
 
-# Clean and build the project
+### 2. Build the Application
+
+#### Using Maven
+
+```bash
+# Clean and build the application
 mvn clean package
 
-# Run tests
-mvn test
-
-# Run integration tests
-mvn verify
+# Skip tests if needed (not recommended)
+mvn clean package -DskipTests
 ```
 
-### 2. Run Locally (Without Docker)
-```bash
-# Run the application
-java -jar target/spring-boot-sample-actuator-3.1.5.jar
+**Build Output:**
+- JAR file location: `target/spring-boot-sample-actuator-3.1.5.jar`
+- Build time: ~30-60 seconds (first build may take longer)
 
-# Or use Maven Spring Boot plugin
+#### Build Verification
+
+```bash
+# Verify JAR was created
+ls -lh target/*.jar
+
+# Check JAR contents
+jar tf target/spring-boot-sample-actuator-3.1.5.jar | head -20
+```
+
+### 3. Run the Application
+
+#### Method 1: Using Maven Spring Boot Plugin (Development)
+
+```bash
 mvn spring-boot:run
 ```
 
-### 3. Access the Application
-- **Main Endpoint**: http://localhost:8080/
-- **Health Check**: http://localhost:8080/actuator/health
-- **Info Endpoint**: http://localhost:8080/actuator/info
-- **All Actuator Endpoints**: http://localhost:8080/actuator
+#### Method 2: Using Java JAR (Production-like)
 
----
-
-## Docker Deployment
-
-### Build Docker Image
-
-#### Option 1: Standard Build
 ```bash
-# Navigate to project directory
-cd legacy-app/spring-boot-2-sample-app
-
-# Build Docker image
-docker build -t spring-boot-actuator-sample:3.1.5 .
-
-# Verify image was created
-docker images | grep spring-boot-actuator-sample
+java -jar target/spring-boot-sample-actuator-3.1.5.jar
 ```
 
-#### Option 2: Build with Custom Tag
-```bash
-# Build with custom registry and tag
-docker build -t myregistry.com/spring-boot-actuator-sample:3.1.5 .
+#### Method 3: With Custom JVM Options
 
-# Build with latest tag
-docker build -t spring-boot-actuator-sample:latest .
+```bash
+java -Xmx512m -Xms256m \
+     -Dserver.port=8080 \
+     -jar target/spring-boot-sample-actuator-3.1.5.jar
 ```
 
-#### Option 3: Multi-Platform Build (ARM64 + AMD64)
-```bash
-# Create and use buildx builder
-docker buildx create --name multiplatform-builder --use
-
-# Build for multiple platforms
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t spring-boot-actuator-sample:3.1.5 \
-  --push \
-  .
-```
-
-### Build Process Details
-The Dockerfile uses a **multi-stage build**:
-
-1. **Build Stage** (`MAVEN_TOOL_CHAIN`):
-   - Uses `maven:3.9-eclipse-temurin-17-alpine`
-   - Downloads dependencies
-   - Compiles and packages the application
-   - Creates executable JAR file
-
-2. **Runtime Stage**:
-   - Uses `eclipse-temurin:17-jdk-alpine`
-   - Creates non-root user for security
-   - Copies only the JAR file from build stage
-   - Configures health check
-   - Runs as non-root user
-
----
-
-## Running the Docker Container
-
-### Basic Run
-```bash
-# Run container in foreground
-docker run -p 8080:8080 spring-boot-actuator-sample:3.1.5
-
-# Run container in background (detached mode)
-docker run -d -p 8080:8080 --name spring-actuator spring-boot-actuator-sample:3.1.5
-```
-
-### Run with Custom Configuration
-```bash
-# Run with environment variables
-docker run -d \
-  -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=production \
-  -e SERVER_PORT=8080 \
-  --name spring-actuator \
-  spring-boot-actuator-sample:3.1.5
-
-# Run with custom application.properties
-docker run -d \
-  -p 8080:8080 \
-  -v $(pwd)/custom-application.properties:/app/application.properties \
-  --name spring-actuator \
-  spring-boot-actuator-sample:3.1.5
-```
-
-### Run with Resource Limits
-```bash
-# Run with memory and CPU limits
-docker run -d \
-  -p 8080:8080 \
-  --memory="512m" \
-  --cpus="1.0" \
-  --name spring-actuator \
-  spring-boot-actuator-sample:3.1.5
-```
-
-### Run with Logging
-```bash
-# Run with log driver
-docker run -d \
-  -p 8080:8080 \
-  --log-driver json-file \
-  --log-opt max-size=10m \
-  --log-opt max-file=3 \
-  --name spring-actuator \
-  spring-boot-actuator-sample:3.1.5
-```
-
----
-
-## Container Management
-
-### View Running Containers
-```bash
-# List running containers
-docker ps
-
-# List all containers (including stopped)
-docker ps -a
-```
-
-### View Container Logs
-```bash
-# View logs (follow mode)
-docker logs -f spring-actuator
-
-# View last 100 lines
-docker logs --tail 100 spring-actuator
-
-# View logs with timestamps
-docker logs -t spring-actuator
-```
-
-### Stop and Remove Container
-```bash
-# Stop container
-docker stop spring-actuator
-
-# Remove container
-docker rm spring-actuator
-
-# Stop and remove in one command
-docker rm -f spring-actuator
-```
-
-### Execute Commands in Container
-```bash
-# Open shell in running container
-docker exec -it spring-actuator sh
-
-# Check Java version in container
-docker exec spring-actuator java -version
-
-# View application logs
-docker exec spring-actuator cat /tmp/logs/app.log
-```
-
----
-
-## Health Check Verification
-
-### Docker Health Check
-The container includes an automatic health check that runs every 30 seconds:
+### 4. Verify Application is Running
 
 ```bash
-# Check container health status
-docker inspect --format='{{.State.Health.Status}}' spring-actuator
-
-# View health check logs
-docker inspect --format='{{range .State.Health.Log}}{{.Output}}{{end}}' spring-actuator
-```
-
-Health check configuration:
-- **Interval**: 30 seconds
-- **Timeout**: 3 seconds
-- **Start Period**: 40 seconds (grace period for application startup)
-- **Retries**: 3 attempts before marking unhealthy
-
-### Manual Health Check
-```bash
-# Check health endpoint
+# Check application health
 curl http://localhost:8080/actuator/health
 
 # Expected response:
 # {"status":"UP","components":{"db":{"status":"UP"},...}}
 
-# Check from within container
-docker exec spring-actuator wget -qO- http://localhost:8080/actuator/health
+# Test main endpoint
+curl http://localhost:8080/
+
+# Expected response:
+# {"message":"Hello World"}
 ```
 
----
+## Docker Deployment
 
-## Docker Compose Deployment
+### 1. Build Docker Image
 
-### Create docker-compose.yml
+#### Using Provided Dockerfile
+
+```bash
+# Navigate to application directory
+cd legacy-app/spring-boot-2-sample-app
+
+# Build Docker image
+docker build -t spring-boot-actuator:3.1.5 .
+
+# Verify image was created
+docker images | grep spring-boot-actuator
+```
+
+#### Multi-stage Build (Optimized)
+
+```dockerfile
+# Dockerfile content
+FROM eclipse-temurin:17-jdk-alpine AS build
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN apk add --no-cache maven && \
+    mvn clean package -DskipTests
+
+FROM eclipse-temurin:17-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/spring-boot-sample-actuator-3.1.5.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+### 2. Run Docker Container
+
+#### Basic Run
+
+```bash
+docker run -p 8080:8080 spring-boot-actuator:3.1.5
+```
+
+#### Run with Environment Variables
+
+```bash
+docker run -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  -e JAVA_OPTS="-Xmx512m -Xms256m" \
+  spring-boot-actuator:3.1.5
+```
+
+#### Run in Detached Mode
+
+```bash
+docker run -d \
+  --name spring-boot-app \
+  -p 8080:8080 \
+  --restart unless-stopped \
+  spring-boot-actuator:3.1.5
+
+# View logs
+docker logs -f spring-boot-app
+
+# Stop container
+docker stop spring-boot-app
+
+# Remove container
+docker rm spring-boot-app
+```
+
+### 3. Docker Compose (Recommended for Development)
+
+Create `docker-compose.yml`:
+
 ```yaml
 version: '3.8'
 
 services:
-  spring-actuator:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: spring-boot-actuator-sample:3.1.5
-    container_name: spring-actuator
+  app:
+    build: .
+    image: spring-boot-actuator:3.1.5
+    container_name: spring-boot-app
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xmx512m -Xms256m
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
-      timeout: 3s
-      start_period: 40s
+      timeout: 10s
       retries: 3
+      start_period: 40s
     restart: unless-stopped
-    networks:
-      - spring-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-networks:
-  spring-network:
-    driver: bridge
 ```
 
-### Deploy with Docker Compose
+Run with Docker Compose:
+
 ```bash
 # Start services
-docker compose up -d
+docker-compose up -d
 
 # View logs
-docker compose logs -f
+docker-compose logs -f
 
 # Stop services
-docker compose down
+docker-compose down
 
 # Rebuild and restart
-docker compose up -d --build
+docker-compose up -d --build
 ```
-
----
 
 ## Production Deployment
 
-### Push to Container Registry
+### Environment Requirements
 
-#### Docker Hub
-```bash
-# Login to Docker Hub
-docker login
+#### System Requirements
+- **CPU:** 2+ cores recommended
+- **RAM:** 1GB minimum, 2GB recommended
+- **Disk:** 500MB for application + logs
+- **OS:** Linux (Ubuntu 20.04+, RHEL 8+, or similar)
 
-# Tag image
-docker tag spring-boot-actuator-sample:3.1.5 username/spring-boot-actuator-sample:3.1.5
+#### Network Requirements
+- **Port 8080:** Application HTTP port
+- **Outbound:** Internet access for dependency downloads (build time)
 
-# Push image
-docker push username/spring-boot-actuator-sample:3.1.5
+### Configuration
+
+#### Application Properties
+
+Create `application-prod.properties`:
+
+```properties
+# Server Configuration
+server.port=8080
+server.shutdown=graceful
+spring.lifecycle.timeout-per-shutdown-phase=30s
+
+# Actuator Configuration
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=when-authorized
+management.metrics.export.prometheus.enabled=true
+
+# Logging Configuration
+logging.level.root=INFO
+logging.level.sample.actuator=INFO
+logging.file.name=/var/log/spring-boot-app/application.log
+logging.file.max-size=10MB
+logging.file.max-history=30
+
+# Database Configuration (H2 in-memory)
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.h2.console.enabled=false
 ```
 
-#### Private Registry
+#### JVM Options for Production
+
 ```bash
-# Login to private registry
-docker login myregistry.com
-
-# Tag image
-docker tag spring-boot-actuator-sample:3.1.5 myregistry.com/spring-boot-actuator-sample:3.1.5
-
-# Push image
-docker push myregistry.com/spring-boot-actuator-sample:3.1.5
+# Recommended JVM options
+JAVA_OPTS="-Xmx1g \
+           -Xms512m \
+           -XX:+UseG1GC \
+           -XX:MaxGCPauseMillis=200 \
+           -XX:+HeapDumpOnOutOfMemoryError \
+           -XX:HeapDumpPath=/var/log/spring-boot-app/heapdump.hprof \
+           -Dspring.profiles.active=prod"
 ```
 
-### Deploy to Production Server
-```bash
-# Pull image on production server
-docker pull myregistry.com/spring-boot-actuator-sample:3.1.5
+### Systemd Service (Linux)
 
-# Run with production configuration
-docker run -d \
-  -p 8080:8080 \
-  --name spring-actuator-prod \
-  --restart=always \
-  --memory="1g" \
-  --cpus="2.0" \
-  -e SPRING_PROFILES_ACTIVE=production \
-  -e JAVA_OPTS="-Xmx768m -Xms512m" \
-  --log-driver json-file \
-  --log-opt max-size=50m \
-  --log-opt max-file=5 \
-  myregistry.com/spring-boot-actuator-sample:3.1.5
+Create `/etc/systemd/system/spring-boot-app.service`:
+
+```ini
+[Unit]
+Description=Spring Boot Actuator Application
+After=network.target
+
+[Service]
+Type=simple
+User=springboot
+Group=springboot
+WorkingDirectory=/opt/spring-boot-app
+ExecStart=/usr/bin/java -jar /opt/spring-boot-app/spring-boot-sample-actuator-3.1.5.jar
+SuccessExitStatus=143
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=10
+
+# Environment
+Environment="JAVA_OPTS=-Xmx1g -Xms512m"
+Environment="SPRING_PROFILES_ACTIVE=prod"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=spring-boot-app
+
+[Install]
+WantedBy=multi-user.target
 ```
 
----
+Manage the service:
+
+```bash
+# Reload systemd
+sudo systemctl daemon-reload
+
+# Enable service to start on boot
+sudo systemctl enable spring-boot-app
+
+# Start service
+sudo systemctl start spring-boot-app
+
+# Check status
+sudo systemctl status spring-boot-app
+
+# View logs
+sudo journalctl -u spring-boot-app -f
+
+# Stop service
+sudo systemctl stop spring-boot-app
+
+# Restart service
+sudo systemctl restart spring-boot-app
+```
+
+## Cloud Deployment
+
+### AWS Elastic Beanstalk
+
+```bash
+# Install EB CLI
+pip install awsebcli
+
+# Initialize EB application
+eb init -p docker spring-boot-app
+
+# Create environment
+eb create production
+
+# Deploy
+eb deploy
+
+# Open application
+eb open
+```
+
+### Google Cloud Run
+
+```bash
+# Build and push to Google Container Registry
+gcloud builds submit --tag gcr.io/PROJECT_ID/spring-boot-app
+
+# Deploy to Cloud Run
+gcloud run deploy spring-boot-app \
+  --image gcr.io/PROJECT_ID/spring-boot-app \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
+```
+
+### Azure Container Instances
+
+```bash
+# Login to Azure
+az login
+
+# Create resource group
+az group create --name spring-boot-rg --location eastus
+
+# Create container instance
+az container create \
+  --resource-group spring-boot-rg \
+  --name spring-boot-app \
+  --image spring-boot-actuator:3.1.5 \
+  --dns-name-label spring-boot-app-unique \
+  --ports 8080
+```
 
 ## Kubernetes Deployment
 
-### Create Kubernetes Manifests
+### Deployment YAML
 
-#### deployment.yaml
+Create `k8s-deployment.yaml`:
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spring-actuator
+  name: spring-boot-app
   labels:
-    app: spring-actuator
+    app: spring-boot-app
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: spring-actuator
+      app: spring-boot-app
   template:
     metadata:
       labels:
-        app: spring-actuator
+        app: spring-boot-app
     spec:
       containers:
-      - name: spring-actuator
-        image: spring-boot-actuator-sample:3.1.5
+      - name: spring-boot-app
+        image: spring-boot-actuator:3.1.5
         ports:
         - containerPort: 8080
         env:
         - name: SPRING_PROFILES_ACTIVE
-          value: "production"
+          value: "kubernetes"
+        - name: JAVA_OPTS
+          value: "-Xmx512m -Xms256m"
         resources:
           requests:
             memory: "512Mi"
@@ -404,31 +427,24 @@ spec:
             cpu: "1000m"
         livenessProbe:
           httpGet:
-            path: /actuator/health
+            path: /actuator/health/liveness
             port: 8080
-          initialDelaySeconds: 40
-          periodSeconds: 30
-          timeoutSeconds: 3
-          failureThreshold: 3
+          initialDelaySeconds: 60
+          periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /actuator/health
+            path: /actuator/health/readiness
             port: 8080
-          initialDelaySeconds: 20
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-```
-
-#### service.yaml
-```yaml
+          initialDelaySeconds: 30
+          periodSeconds: 5
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: spring-actuator-service
+  name: spring-boot-service
 spec:
   selector:
-    app: spring-actuator
+    app: spring-boot-app
   ports:
   - protocol: TCP
     port: 80
@@ -436,11 +452,11 @@ spec:
   type: LoadBalancer
 ```
 
-### Deploy to Kubernetes
+Deploy to Kubernetes:
+
 ```bash
-# Apply manifests
-kubectl apply -f deployment.yaml
-kubectl apply -f service.yaml
+# Apply deployment
+kubectl apply -f k8s-deployment.yaml
 
 # Check deployment status
 kubectl get deployments
@@ -448,147 +464,184 @@ kubectl get pods
 kubectl get services
 
 # View logs
-kubectl logs -f deployment/spring-actuator
+kubectl logs -f deployment/spring-boot-app
 
 # Scale deployment
-kubectl scale deployment spring-actuator --replicas=5
+kubectl scale deployment spring-boot-app --replicas=5
 ```
 
----
+## Monitoring & Health Checks
 
-## Monitoring and Troubleshooting
+### Actuator Endpoints
 
-### View Application Metrics
 ```bash
-# Access Actuator endpoints
-curl http://localhost:8080/actuator
+# Health check
 curl http://localhost:8080/actuator/health
+
+# Detailed health (requires authentication in prod)
+curl http://localhost:8080/actuator/health/liveness
+curl http://localhost:8080/actuator/health/readiness
+
+# Application info
 curl http://localhost:8080/actuator/info
+
+# Metrics
 curl http://localhost:8080/actuator/metrics
-curl http://localhost:8080/actuator/env
+curl http://localhost:8080/actuator/metrics/jvm.memory.used
 ```
+
+### Prometheus Integration
+
+Add to `application.properties`:
+
+```properties
+management.metrics.export.prometheus.enabled=true
+management.endpoints.web.exposure.include=health,info,metrics,prometheus
+```
+
+Scrape endpoint:
+```bash
+curl http://localhost:8080/actuator/prometheus
+```
+
+## Troubleshooting
 
 ### Common Issues
 
-#### Container Won't Start
+#### Application Won't Start
+
 ```bash
-# Check container logs
-docker logs spring-actuator
+# Check Java version
+java -version
 
 # Check if port is already in use
 lsof -i :8080
+netstat -tuln | grep 8080
 
-# Try different port
-docker run -p 8081:8080 spring-boot-actuator-sample:3.1.5
+# Run with debug logging
+java -jar app.jar --debug
 ```
 
-#### Health Check Failing
+#### Out of Memory Errors
+
 ```bash
-# Check health endpoint manually
-curl http://localhost:8080/actuator/health
+# Increase heap size
+java -Xmx2g -Xms1g -jar app.jar
 
-# Increase start period in Dockerfile
-# HEALTHCHECK --start-period=60s ...
-
-# Check container logs for errors
-docker logs spring-actuator
+# Enable heap dump on OOM
+java -XX:+HeapDumpOnOutOfMemoryError \
+     -XX:HeapDumpPath=/tmp/heapdump.hprof \
+     -jar app.jar
 ```
 
-#### Out of Memory
+#### Docker Container Issues
+
 ```bash
-# Increase container memory
-docker run -d -p 8080:8080 --memory="1g" spring-boot-actuator-sample:3.1.5
+# Check container logs
+docker logs spring-boot-app
 
-# Adjust JVM heap size
-docker run -d -p 8080:8080 \
-  -e JAVA_OPTS="-Xmx768m -Xms512m" \
-  spring-boot-actuator-sample:3.1.5
+# Execute shell in container
+docker exec -it spring-boot-app sh
+
+# Check container resource usage
+docker stats spring-boot-app
 ```
 
----
+### Log Locations
 
-## Security Best Practices
-
-1. **Non-Root User**: Container runs as non-root user `spring`
-2. **Minimal Base Image**: Uses Alpine Linux for smaller attack surface
-3. **Health Checks**: Automatic health monitoring enabled
-4. **Resource Limits**: Set memory and CPU limits in production
-5. **Secrets Management**: Use Docker secrets or environment variables for sensitive data
-6. **Network Isolation**: Use Docker networks to isolate containers
-7. **Regular Updates**: Keep base images and dependencies updated
-
----
+- **Local Development:** Console output
+- **JAR Execution:** Console output or configured log file
+- **Docker:** `docker logs <container-name>`
+- **Systemd:** `journalctl -u spring-boot-app`
+- **Kubernetes:** `kubectl logs <pod-name>`
 
 ## Performance Tuning
 
-### JVM Options
-```bash
-# Optimize for container environment
-docker run -d -p 8080:8080 \
-  -e JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0" \
-  spring-boot-actuator-sample:3.1.5
+### JVM Tuning
 
-# Enable GC logging
-docker run -d -p 8080:8080 \
-  -e JAVA_OPTS="-Xlog:gc*:file=/tmp/gc.log" \
-  spring-boot-actuator-sample:3.1.5
+```bash
+# For 2GB RAM server
+JAVA_OPTS="-Xmx1536m \
+           -Xms768m \
+           -XX:+UseG1GC \
+           -XX:MaxGCPauseMillis=200 \
+           -XX:ParallelGCThreads=4 \
+           -XX:ConcGCThreads=2"
+
+# For 4GB RAM server
+JAVA_OPTS="-Xmx3g \
+           -Xms1536m \
+           -XX:+UseG1GC \
+           -XX:MaxGCPauseMillis=200"
 ```
 
-### Container Resources
-```bash
-# Production-optimized settings
-docker run -d \
-  -p 8080:8080 \
-  --memory="1g" \
-  --memory-reservation="512m" \
-  --cpus="2.0" \
-  --cpu-shares=1024 \
-  spring-boot-actuator-sample:3.1.5
+### Application Tuning
+
+```properties
+# Thread pool configuration
+server.tomcat.threads.max=200
+server.tomcat.threads.min-spare=10
+
+# Connection timeout
+server.tomcat.connection-timeout=20000
+
+# Compression
+server.compression.enabled=true
+server.compression.mime-types=application/json,application/xml,text/html,text/xml,text/plain
 ```
+
+## Security Considerations
+
+### Production Checklist
+
+- [ ] Disable H2 console in production
+- [ ] Restrict actuator endpoints
+- [ ] Enable HTTPS/TLS
+- [ ] Configure authentication for sensitive endpoints
+- [ ] Set up firewall rules
+- [ ] Enable security headers
+- [ ] Regular security updates
+- [ ] Monitor for vulnerabilities
+
+### Secure Actuator Endpoints
+
+```properties
+# Restrict actuator exposure
+management.endpoints.web.exposure.include=health,info
+management.endpoint.health.show-details=when-authorized
+
+# Require authentication
+spring.security.user.name=admin
+spring.security.user.password=${ADMIN_PASSWORD}
+```
+
+## Backup & Recovery
+
+### Application State
+- H2 database is in-memory (no persistence)
+- No file-based state to backup
+- Configuration files should be version controlled
+
+### Disaster Recovery
+1. Keep Docker images tagged and versioned
+2. Maintain configuration in version control
+3. Document deployment procedures
+4. Test rollback procedures regularly
+
+## Support & Resources
+
+### Documentation
+- Spring Boot 3.x: https://docs.spring.io/spring-boot/docs/3.1.5/reference/html/
+- Java 17: https://docs.oracle.com/en/java/javase/17/
+- Docker: https://docs.docker.com/
+
+### Monitoring
+- Application logs: Check configured log location
+- Actuator endpoints: http://localhost:8080/actuator
+- System metrics: Use Prometheus + Grafana
 
 ---
 
-## Backup and Recovery
-
-### Export Container
-```bash
-# Export running container
-docker export spring-actuator > spring-actuator-backup.tar
-
-# Import container
-docker import spring-actuator-backup.tar spring-actuator:backup
-```
-
-### Save and Load Images
-```bash
-# Save image to tar file
-docker save spring-boot-actuator-sample:3.1.5 > spring-actuator-image.tar
-
-# Load image from tar file
-docker load < spring-actuator-image.tar
-```
-
----
-
-## Additional Resources
-
-- [Spring Boot 3.x Documentation](https://docs.spring.io/spring-boot/docs/3.1.5/reference/html/)
-- [Docker Documentation](https://docs.docker.com/)
-- [Spring Boot Actuator Guide](https://docs.spring.io/spring-boot/docs/3.1.5/reference/html/actuator.html)
-- [Eclipse Temurin](https://adoptium.net/)
-
----
-
-## Support and Maintenance
-
-For issues or questions:
-1. Check application logs: `docker logs spring-actuator`
-2. Verify health endpoint: `curl http://localhost:8080/actuator/health`
-3. Review CHANGELOG.md for recent changes
-4. Consult Spring Boot 3.x migration guide
-
----
-
-**Last Updated**: 2026-05-02  
-**Version**: 3.1.5  
-**Maintainer**: Spring Boot Team
+**Last Updated:** 2026-05-02  
+**Version:** 3.1.5  
+**Maintained By:** SpringBoard Team

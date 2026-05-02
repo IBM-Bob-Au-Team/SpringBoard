@@ -1,611 +1,289 @@
-# Spring Boot 2.x Application Analysis Report
+# Legacy Application Analysis Report
 
-**Analysis Date:** May 1, 2026  
-**Application:** Spring Boot Actuator Sample  
-**Location:** `legacy-app/spring-boot-2-sample-app/`
+## Executive Summary
 
----
+This report provides a comprehensive analysis of the legacy Spring Boot 2 Actuator sample application, identifying modernization requirements and migration risks for upgrading to Spring Boot 3.x and Java 17.
 
-## 1. Application Overview
+## Application Overview
 
-This is a **Spring Boot Actuator demonstration application** that showcases:
+**Application Name:** Spring Boot Actuator Sample  
+**Current Version:** 2.0.2 (Legacy)  
+**Target Version:** 3.1.5 (Modernized)  
+**Application Type:** REST API with Spring Boot Actuator endpoints  
+**Packaging:** JAR
 
-- **REST API endpoints** for basic CRUD operations
-- **Spring Boot Actuator** integration for health checks, metrics, and monitoring
-- **Custom health indicators** and info contributors
-- **Configuration properties** management
-- **H2 in-memory database** with JDBC support
-- **Docker containerization** with multi-stage builds
+### Purpose
+The application is a sample Spring Boot application demonstrating Spring Boot Actuator features including:
+- Health check endpoints
+- Custom health indicators
+- Metrics and monitoring capabilities
+- REST API endpoints for hello message handling
+- Validation and error handling
 
-### Key Features:
-- Root endpoint (`/`) returns a JSON message from [`HelloWorldService`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/HelloWorldService.java)
-- POST endpoint for message validation using Bean Validation
-- Error handling endpoint (`/foo`) that throws exceptions
-- Custom health indicators via [`ExampleHealthIndicator`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/ExampleHealthIndicator.java)
-- Custom info contributors via [`ExampleInfoContributor`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/ExampleInfoContributor.java)
-- Actuator endpoints exposed for monitoring
+## Current Technology Stack
 
----
+### Framework Versions (Legacy)
+- **Spring Boot:** 2.0.2
+- **Java Version:** 1.8
+- **Maven:** 3.x
 
-## 2. Current Spring Boot Version
+### Core Dependencies
 
-**Version:** `2.0.2.RELEASE` (from [`pom.xml:15`](legacy-app/spring-boot-2-sample-app/pom.xml:15))
+#### Compile Dependencies
+1. **spring-boot-starter-actuator** - Provides production-ready features for monitoring and managing the application
+2. **spring-boot-starter-web** - Web application support with embedded Tomcat
+3. **spring-boot-starter-validation** - Bean validation with Hibernate validator
+4. **spring-boot-starter-jdbc** - JDBC database connectivity
 
-**Status:** ⚠️ **CRITICALLY OUTDATED**
-- Released: May 2018 (over 8 years old)
-- End of OSS support: May 2019
-- End of commercial support: August 2019
-- **Security vulnerabilities:** Multiple CVEs affecting this version
+#### Runtime Dependencies
+5. **httpclient (Apache HttpComponents)** - HTTP client library (Legacy version 4.x)
+6. **h2** - In-memory database for development and testing
 
----
+#### Optional Dependencies
+7. **spring-boot-configuration-processor** - Generates metadata for configuration properties
 
-## 3. Current Java Version
-
-**Version:** `1.8` (Java 8) (from [`pom.xml:22`](legacy-app/spring-boot-2-sample-app/pom.xml:22))
-
-**Status:** ⚠️ **OUTDATED**
-- Java 8 reached end of public updates in January 2019
-- Spring Boot 3.x requires Java 17 minimum (Java 21 recommended)
-
----
-
-## 4. Outdated Dependencies Analysis
-
-### Core Framework Dependencies
-
-| Dependency | Current Version | Latest Stable | Recommendation | Severity |
-|------------|----------------|---------------|----------------|----------|
-| **spring-boot-starter-parent** | 2.0.2.RELEASE | 3.3.x | Upgrade to 3.3.x | 🔴 Critical |
-| **spring-boot-starter-actuator** | 2.0.2 | 3.3.x | Upgrade to 3.3.x | 🔴 Critical |
-| **spring-boot-starter-web** | 2.0.2 | 3.3.x | Upgrade to 3.3.x | 🔴 Critical |
-| **spring-boot-starter-jdbc** | 2.0.2 | 3.3.x | Upgrade to 3.3.x | 🔴 Critical |
-| **spring-boot-starter-test** | 2.0.2 | 3.3.x | Upgrade to 3.3.x | 🔴 Critical |
-
-### Runtime Dependencies
-
-| Dependency | Current Version | Latest Stable | Recommendation | Severity |
-|------------|----------------|---------------|----------------|----------|
-| **httpclient** | Inherited (4.5.x) | 5.3.x | Upgrade to 5.3.x | 🟡 Medium |
-| **h2** | Inherited (1.4.x) | 2.2.x | Upgrade to 2.2.x | 🟡 Medium |
-
-### Test Dependencies
-
-| Dependency | Current Version | Latest Stable | Recommendation | Severity |
-|------------|----------------|---------------|----------------|----------|
-| **rest-assured** | Inherited (3.x) | 5.4.x | Upgrade to 5.4.x | 🟡 Medium |
-| **groovy-all** | Inherited (2.4.x) | 4.0.x | Upgrade to 4.0.x | 🟡 Medium |
+#### Test Dependencies
+8. **spring-boot-starter-test** - Testing framework including JUnit, Mockito, AssertJ
+9. **rest-assured** - REST API testing framework
+10. **groovy** - Groovy language support for tests
 
 ### Build Plugins
+- **spring-boot-maven-plugin** - Packages application as executable JAR
+- **maven-surefire-plugin (3.0.0)** - Runs unit tests
+- **maven-failsafe-plugin (3.0.0)** - Runs integration tests
 
-| Plugin | Current Version | Latest Stable | Recommendation | Severity |
-|--------|----------------|---------------|----------------|----------|
-| **maven-surefire-plugin** | 2.9 | 3.2.x | Upgrade to 3.2.x | 🟠 High |
-| **maven-failsafe-plugin** | 2.18 | 3.2.x | Upgrade to 3.2.x | 🟠 High |
+## Code Structure Analysis
 
-**Note:** Surefire 2.9 is from 2011 and has known issues with modern JUnit versions.
+### Main Application Components
 
----
+1. **SampleActuatorApplication.java**
+   - Main Spring Boot application class
+   - Defines custom health indicator bean
+   - Uses `@SpringBootApplication` annotation
+   - Enables configuration properties
 
-## 5. javax.* to jakarta.* Migration Requirements
+2. **SampleController.java**
+   - REST controller with GET and POST endpoints
+   - Uses validation annotations
+   - Demonstrates error handling with `/foo` endpoint
+   - Returns JSON responses
 
-### Required Changes for Spring Boot 3.x
+3. **HelloWorldService.java**
+   - Service layer component
+   - Provides hello message generation
 
-Spring Boot 3.x requires migration from `javax.*` to `jakarta.*` namespace due to Jakarta EE 9+ adoption.
+4. **ServiceProperties.java**
+   - Configuration properties class
+   - Manages application configuration
 
-#### Files Requiring Updates:
+5. **ExampleHealthIndicator.java**
+   - Custom health indicator implementation
+   - Extends Spring Boot Actuator health checks
 
-1. **[`SampleController.java:24`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleController.java:24)**
-   ```java
-   // CURRENT (Spring Boot 2.x)
-   import javax.validation.constraints.NotBlank;
+6. **ExampleInfoContributor.java**
+   - Custom info contributor
+   - Adds custom information to actuator info endpoint
+
+## Migration Issues Identified
+
+### Critical Issues
+
+#### 1. Java Version Incompatibility
+- **Current:** Java 1.8
+- **Required:** Java 17
+- **Impact:** HIGH
+- **Effort:** Medium
+- **Description:** Java 17 introduces new language features and removes deprecated APIs. Code must be updated to compile with Java 17.
+
+#### 2. Namespace Migration (javax.* to jakarta.*)
+- **Impact:** CRITICAL
+- **Effort:** Medium
+- **Description:** Spring Boot 3.x requires Jakarta EE 9+ which uses `jakarta.*` namespace instead of `javax.*`
+- **Affected Areas:**
+  - `javax.validation.constraints.NotBlank` → `jakarta.validation.constraints.NotBlank`
+  - All validation annotations
+  - Servlet API references
+  - Persistence API (if used)
+
+#### 3. Spring Boot Version Gap
+- **Current:** 2.0.2 (Released 2018)
+- **Target:** 3.1.5 (Released 2023)
+- **Impact:** HIGH
+- **Description:** Major version jump with breaking changes in:
+  - Configuration properties
+  - Actuator endpoints structure
+  - Security configuration
+  - Dependency management
+
+### High Priority Issues
+
+#### 4. Apache HttpClient Version
+- **Current:** HttpClient 4.x (implicit from Spring Boot 2.0.2)
+- **Target:** HttpClient 5.x (httpclient5)
+- **Impact:** MEDIUM
+- **Description:** API changes in HttpClient 5.x require code updates if directly used
+
+#### 5. Deprecated APIs
+- **Impact:** MEDIUM
+- **Description:** Several APIs deprecated in Spring Boot 2.x are removed in 3.x:
+  - Some actuator endpoint configurations
+  - Security auto-configuration patterns
+  - Property naming conventions
+
+### Medium Priority Issues
+
+#### 6. Configuration Properties Changes
+- **Impact:** MEDIUM
+- **Description:** Property names and structures changed between versions:
+  - Actuator endpoint exposure configuration
+  - Management endpoint base path
+  - Security properties
+
+#### 7. Test Framework Updates
+- **Impact:** LOW-MEDIUM
+- **Description:** JUnit 4 to JUnit 5 migration if tests use JUnit 4 annotations
+
+## Dependency Analysis
+
+### Dependencies Requiring Updates
+
+| Dependency | Legacy Version | Modern Version | Breaking Changes |
+|------------|---------------|----------------|------------------|
+| Spring Boot Parent | 2.0.2 | 3.1.5 | Yes - Major |
+| Java | 1.8 | 17 | Yes - Language |
+| HttpClient | 4.x | 5.x | Yes - API |
+| Maven Surefire | 3.0.0 | 3.0.0+ | No |
+| Maven Failsafe | 3.0.0 | 3.0.0+ | No |
+
+### New Dependencies Required
+- None - All existing dependencies have Spring Boot 3.x compatible versions
+
+### Dependencies to Remove
+- None - All dependencies are still relevant
+
+## Risk Assessment
+
+### Overall Risk Level: **MEDIUM-HIGH**
+
+### Risk Breakdown
+
+#### Technical Risks
+1. **Namespace Migration (HIGH)**
+   - All `javax.*` imports must be changed to `jakarta.*`
+   - Risk of missing imports in large codebases
+   - Mitigation: Automated find-replace with verification
+
+2. **API Compatibility (MEDIUM)**
+   - Some Spring Boot APIs changed between 2.x and 3.x
+   - Risk of runtime errors if not caught during testing
+   - Mitigation: Comprehensive testing suite
+
+3. **Configuration Changes (MEDIUM)**
+   - Property names and structures changed
+   - Risk of application failing to start
+   - Mitigation: Review all application.properties files
+
+4. **Java 17 Compatibility (LOW-MEDIUM)**
+   - Code must compile with Java 17
+   - Risk of using removed APIs
+   - Mitigation: Compile-time verification
+
+#### Business Risks
+1. **Downtime Risk (LOW)**
+   - Application is a sample/demo
+   - Limited production impact
    
-   // REQUIRED (Spring Boot 3.x)
-   import jakarta.validation.constraints.NotBlank;
-   ```
+2. **Testing Coverage (MEDIUM)**
+   - Existing tests must be updated and verified
+   - Risk of regression if tests are incomplete
 
-#### Summary of javax.* Imports Found:
-- ✅ `javax.validation.constraints.NotBlank` → `jakarta.validation.constraints.NotBlank`
+### Risk Mitigation Strategies
 
-#### Additional Considerations:
-- Bean Validation API changes from `javax.validation` to `jakarta.validation`
-- Servlet API changes from `javax.servlet` to `jakarta.servlet` (if used)
-- Persistence API changes from `javax.persistence` to `jakarta.persistence` (if JPA is added)
+1. **Automated Migration Tools**
+   - Use OpenRewrite or similar tools for namespace migration
+   - Automated refactoring reduces human error
 
----
+2. **Comprehensive Testing**
+   - Run all existing tests after migration
+   - Add integration tests for critical paths
+   - Verify actuator endpoints functionality
 
-## 6. Deprecated Spring Boot 2 Patterns
+3. **Staged Rollout**
+   - Test in development environment first
+   - Validate all endpoints and health checks
+   - Monitor logs for deprecation warnings
 
-### 🔴 Critical Deprecations
+4. **Rollback Plan**
+   - Maintain legacy version in separate branch
+   - Document rollback procedures
+   - Keep Docker images of both versions
 
-#### 1. **Anonymous Inner Class for HealthIndicator** ([`SampleActuatorApplication.java:34-44`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleActuatorApplication.java:34-44))
+## Modernization Benefits
 
-**Current Pattern:**
-```java
-@Bean
-public HealthIndicator helloHealthIndicator() {
-    return new HealthIndicator() {
-        @Override
-        public Health health() {
-            return Health.up().withDetail("hello", "world").build();
-        }
-    };
-}
-```
+### Performance Improvements
+- Java 17 performance enhancements (GC improvements, optimizations)
+- Spring Boot 3.x efficiency improvements
+- Better memory management
 
-**Issue:** Anonymous inner classes are verbose and harder to test.
+### Security Enhancements
+- Java 17 security updates
+- Spring Boot 3.x security patches
+- Updated dependency versions with security fixes
 
-**Recommended Pattern:**
-```java
-@Bean
-public HealthIndicator helloHealthIndicator() {
-    return () -> Health.up().withDetail("hello", "world").build();
-}
-```
+### Feature Additions
+- Native compilation support (GraalVM)
+- Improved observability with Micrometer
+- Better Kubernetes integration
+- Enhanced actuator endpoints
 
-Or create a separate component class like [`ExampleHealthIndicator`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/ExampleHealthIndicator.java).
+### Long-term Maintainability
+- Active support for Spring Boot 3.x (2.x EOL)
+- Java 17 LTS support until 2029
+- Modern development practices
+- Better IDE support
 
----
+## Recommendations
 
-#### 2. **ConfigurationProperties ignoreUnknownFields** ([`ServiceProperties.java:21`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/ServiceProperties.java:21))
+### Immediate Actions
+1. ✅ Update `pom.xml` to Spring Boot 3.1.5
+2. ✅ Change Java version to 17
+3. ✅ Migrate all `javax.*` imports to `jakarta.*`
+4. ✅ Update HttpClient to version 5.x
+5. ✅ Review and update configuration properties
 
-**Current Pattern:**
-```java
-@ConfigurationProperties(prefix = "service", ignoreUnknownFields = false)
-```
+### Testing Requirements
+1. Run all unit tests and verify pass rate
+2. Execute integration tests
+3. Test all REST endpoints manually
+4. Verify actuator endpoints functionality
+5. Check health indicators
+6. Validate error handling
 
-**Issue:** `ignoreUnknownFields` attribute is deprecated in Spring Boot 2.x and removed in 3.x.
+### Documentation Updates
+1. Update README with new Java version requirement
+2. Document configuration changes
+3. Update deployment guides
+4. Create migration changelog
 
-**Recommended Pattern:**
-```java
-@ConfigurationProperties(prefix = "service")
-@Validated // Add validation if needed
-```
+### Post-Migration Tasks
+1. Monitor application logs for warnings
+2. Performance testing and comparison
+3. Security scanning with updated dependencies
+4. Update CI/CD pipelines for Java 17
 
----
+## Conclusion
 
-#### 3. **HTTP Trace Configuration** ([`application.properties:16`](legacy-app/spring-boot-2-sample-app/src/main/resources/application.properties:16))
+The legacy Spring Boot 2.0.2 application can be successfully modernized to Spring Boot 3.1.5 with Java 17. The primary challenges are:
+- Namespace migration from `javax.*` to `jakarta.*`
+- Configuration property updates
+- Java version upgrade
 
-**Current Pattern:**
-```properties
-management.httptrace.include=REQUEST_HEADERS,RESPONSE_HEADERS,PRINCIPAL,REMOTE_ADDRESS,SESSION_ID
-```
+The migration is **feasible** with **medium-high complexity** but offers significant benefits in terms of security, performance, and long-term maintainability. With proper testing and staged rollout, the risks can be effectively managed.
 
-**Issue:** `management.httptrace.*` is deprecated in Spring Boot 2.2+ and removed in 3.x. Replaced by `management.httpexchanges.*`.
-
-**Recommended Pattern:**
-```properties
-management.httpexchanges.recording.include=REQUEST_HEADERS,RESPONSE_HEADERS,PRINCIPAL,REMOTE_ADDRESS,SESSION_ID
-```
-
----
-
-#### 4. **JUnit 4 Test Annotations** (Multiple test files)
-
-**Files Affected:**
-- [`ExampleInfoContributorTest.java:7`](legacy-app/spring-boot-2-sample-app/src/test/java/sample/actuator/ExampleInfoContributorTest.java:7)
-- [`HealthIT.java:3-4`](legacy-app/spring-boot-2-sample-app/src/test/java/sample/actuator/HealthIT.java:3-4)
-- [`HelloWorldServiceTest.java:3,5`](legacy-app/spring-boot-2-sample-app/src/test/java/sample/actuator/HelloWorldServiceTest.java:3,5)
-
-**Current Pattern:**
-```java
-import org.junit.Test;
-import org.junit.BeforeClass;
-import static org.junit.Assert.assertEquals;
-
-@Test
-public void testMethod() { }
-```
-
-**Issue:** JUnit 4 is deprecated. Spring Boot 3.x uses JUnit 5 (Jupiter) by default.
-
-**Recommended Pattern:**
-```java
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-@Test
-void testMethod() { }
-```
+**Estimated Effort:** 2-3 days for a small application like this  
+**Recommended Approach:** Automated migration tools + manual verification + comprehensive testing
 
 ---
 
-#### 5. **@RequestMapping without HTTP Method** ([`SampleController.java:62`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleController.java:62))
-
-**Current Pattern:**
-```java
-@RequestMapping("/foo")
-@ResponseBody
-public String foo() {
-    throw new IllegalArgumentException("Server error");
-}
-```
-
-**Issue:** Using `@RequestMapping` without specifying HTTP method is ambiguous and not recommended.
-
-**Recommended Pattern:**
-```java
-@GetMapping("/foo")
-public String foo() {
-    throw new IllegalArgumentException("Server error");
-}
-```
-
----
-
-### 🟡 Medium Priority Deprecations
-
-#### 6. **Tomcat Access Log Configuration** ([`application.properties:9-10`](legacy-app/spring-boot-2-sample-app/src/main/resources/application.properties:9-10))
-
-**Current Pattern:**
-```properties
-server.tomcat.accesslog.enabled=true
-server.tomcat.accesslog.pattern=%h %t "%r" %s %b
-```
-
-**Status:** Still supported but property names may change in future versions.
-
-**Recommendation:** Monitor for updates in Spring Boot 3.x documentation.
-
----
-
-## 7. Missing Test Coverage Areas
-
-### 🔴 Critical Gaps
-
-#### 1. **SampleController Tests**
-- **Missing:** Unit tests for [`SampleController`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleController.java)
-- **Impact:** No coverage for:
-  - GET `/` endpoint ([line 45-50](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleController.java:45-50))
-  - POST `/` endpoint with validation ([line 52-60](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleController.java:52-60))
-  - Error handling endpoint `/foo` ([line 62-66](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleController.java:62-66))
-  - Message validation logic ([line 68-81](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleController.java:68-81))
-
-**Recommended Tests:**
-```java
-@WebMvcTest(SampleController.class)
-class SampleControllerTest {
-    @Test void testGetEndpoint() { }
-    @Test void testPostEndpointWithValidMessage() { }
-    @Test void testPostEndpointWithInvalidMessage() { }
-    @Test void testErrorEndpoint() { }
-}
-```
-
----
-
-#### 2. **SampleActuatorApplication Tests**
-- **Missing:** Tests for main application class and bean configurations
-- **Impact:** No coverage for:
-  - Application startup
-  - Custom health indicator bean ([line 34-44](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/SampleActuatorApplication.java:34-44))
-  - Configuration properties binding
-
-**Recommended Tests:**
-```java
-@SpringBootTest
-class SampleActuatorApplicationTest {
-    @Test void contextLoads() { }
-    @Test void healthIndicatorBeanExists() { }
-}
-```
-
----
-
-#### 3. **ExampleHealthIndicator Tests**
-- **Missing:** Unit tests for [`ExampleHealthIndicator`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/ExampleHealthIndicator.java)
-- **Impact:** No verification of health check logic
-
-**Recommended Tests:**
-```java
-class ExampleHealthIndicatorTest {
-    @Test void healthReturnsUp() { }
-    @Test void healthIncludesCounter() { }
-}
-```
-
----
-
-#### 4. **ServiceProperties Tests**
-- **Missing:** Tests for [`ServiceProperties`](legacy-app/spring-boot-2-sample-app/src/main/java/sample/actuator/ServiceProperties.java)
-- **Impact:** No validation of configuration binding
-
-**Recommended Tests:**
-```java
-@SpringBootTest
-class ServicePropertiesTest {
-    @Test void defaultNameIsWorld() { }
-    @Test void customNameBinding() { }
-}
-```
-
----
-
-### 🟡 Medium Priority Gaps
-
-#### 5. **Integration Test Coverage**
-- **Existing:** [`HealthIT.java`](legacy-app/spring-boot-2-sample-app/src/test/java/sample/actuator/HealthIT.java) provides basic integration tests
-- **Missing:**
-  - Actuator endpoint security tests
-  - Database connectivity tests
-  - Error response format validation
-  - Content negotiation tests
-
----
-
-#### 6. **Edge Case Testing**
-- **Missing:**
-  - Null/empty input handling
-  - Concurrent request handling
-  - Large payload handling
-  - Special character handling in messages
-
----
-
-### Test Coverage Summary
-
-| Component | Current Coverage | Target Coverage | Priority |
-|-----------|-----------------|-----------------|----------|
-| SampleController | 0% (via HealthIT only) | 80%+ | 🔴 Critical |
-| HelloWorldService | ✅ 100% | 100% | ✅ Complete |
-| ExampleHealthIndicator | 0% | 80%+ | 🔴 Critical |
-| ExampleInfoContributor | ✅ 100% | 100% | ✅ Complete |
-| ServiceProperties | 0% | 80%+ | 🟡 Medium |
-| SampleActuatorApplication | 0% | 60%+ | 🟡 Medium |
-
----
-
-## 8. Docker/Deployment Risks for Spring Boot 3 Upgrade
-
-### 🔴 Critical Risks
-
-#### 1. **Outdated Base Images** ([`Dockerfile:1,8`](legacy-app/spring-boot-2-sample-app/Dockerfile:1,8))
-
-**Current Configuration:**
-```dockerfile
-FROM maven:3.5.2-jdk-8-alpine AS MAVEN_TOOL_CHAIN
-FROM java:8-jre-alpine
-```
-
-**Issues:**
-- ⚠️ **Maven 3.5.2** is from 2017 (current: 3.9.x)
-- ⚠️ **JDK 8** incompatible with Spring Boot 3.x (requires Java 17+)
-- ⚠️ **`java:8-jre-alpine`** image is deprecated and has security vulnerabilities
-- ⚠️ Alpine Linux version is outdated
-
-**Security Concerns:**
-- Multiple CVEs in Java 8
-- Unmaintained base images
-- Missing security patches
-
-**Required Changes:**
-```dockerfile
-FROM maven:3.9-eclipse-temurin-21-alpine AS MAVEN_TOOL_CHAIN
-FROM eclipse-temurin:21-jre-alpine
-```
-
-**Alternative (Recommended):**
-```dockerfile
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
-FROM eclipse-temurin:21-jre-jammy  # Ubuntu-based for better compatibility
-```
-
----
-
-#### 2. **Maven Settings Reference** ([`Dockerfile:3,6`](legacy-app/spring-boot-2-sample-app/Dockerfile:3,6))
-
-**Current Configuration:**
-```dockerfile
-RUN mvn -B dependency:go-offline -f /tmp/pom.xml -s /usr/share/maven/ref/settings-docker.xml
-RUN mvn -B -s /usr/share/maven/ref/settings-docker.xml package
-```
-
-**Issue:** Custom Maven settings file may not exist in newer Maven images.
-
-**Recommended Approach:**
-```dockerfile
-# Copy custom settings if needed, or remove -s flag
-COPY settings.xml /root/.m2/settings.xml
-RUN mvn -B dependency:go-offline -f /tmp/pom.xml
-RUN mvn -B package
-```
-
----
-
-#### 3. **Health Check Endpoint Path** ([`Dockerfile:17`](legacy-app/spring-boot-2-sample-app/Dockerfile:17))
-
-**Current Configuration:**
-```dockerfile
-HEALTHCHECK --interval=1m --timeout=3s CMD wget -q -T 3 -s http://localhost:8080/actuator/health/ || exit 1
-```
-
-**Issues:**
-- Trailing slash may cause issues in some configurations
-- `wget` may not be available in minimal Alpine images
-- Health check configuration may need adjustment for Spring Boot 3.x
-
-**Recommended Configuration:**
-```dockerfile
-# Install curl in Alpine
-RUN apk add --no-cache curl
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
-```
-
----
-
-#### 4. **JVM Options** ([`Dockerfile:15`](legacy-app/spring-boot-2-sample-app/Dockerfile:15))
-
-**Current Configuration:**
-```dockerfile
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app/spring-boot-application.jar"]
-```
-
-**Issues:**
-- Missing memory limits (can cause OOM in containers)
-- Missing GC tuning for containerized environments
-- `-Djava.security.egd` is less relevant in modern Java versions
-
-**Recommended Configuration:**
-```dockerfile
-ENTRYPOINT ["java", \
-  "-XX:+UseContainerSupport", \
-  "-XX:MaxRAMPercentage=75.0", \
-  "-XX:+UseG1GC", \
-  "-Djava.security.egd=file:/dev/./urandom", \
-  "-jar", "/app/spring-boot-application.jar"]
-```
-
----
-
-### 🟡 Medium Priority Risks
-
-#### 5. **Multi-Stage Build Optimization**
-
-**Current Approach:** Two-stage build is good, but can be optimized.
-
-**Recommendations:**
-- Use layer caching for dependencies
-- Separate dependency download from build
-- Use `.dockerignore` file
-
-**Optimized Dockerfile:**
-```dockerfile
-FROM maven:3.9-eclipse-temurin-21-alpine AS dependencies
-WORKDIR /build
-COPY pom.xml .
-RUN mvn dependency:go-offline
-
-FROM maven:3.9-eclipse-temurin-21-alpine AS build
-WORKDIR /build
-COPY --from=dependencies /root/.m2 /root/.m2
-COPY pom.xml .
-COPY src ./src
-RUN mvn package -DskipTests
-
-FROM eclipse-temurin:21-jre-alpine
-RUN apk add --no-cache curl
-WORKDIR /app
-COPY --from=build /build/target/*.jar app.jar
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
-ENTRYPOINT ["java", \
-  "-XX:+UseContainerSupport", \
-  "-XX:MaxRAMPercentage=75.0", \
-  "-jar", "app.jar"]
-```
-
----
-
-#### 6. **Security Hardening**
-
-**Missing Security Measures:**
-- No non-root user specified
-- No security scanning in build process
-- No image signing
-
-**Recommended Additions:**
-```dockerfile
-# Add non-root user
-RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
-
-# Use specific image digests for reproducibility
-FROM eclipse-temurin:21-jre-alpine@sha256:...
-```
-
----
-
-#### 7. **Actuator Security Configuration**
-
-**Current Configuration** ([`application.properties:4-7`](legacy-app/spring-boot-2-sample-app/src/main/resources/application.properties:4-7)):
-```properties
-management.server.address=127.0.0.1
-management.endpoints.web.exposure.include=*
-management.endpoint.shutdown.enabled=true
-```
-
-**Issues:**
-- Actuator bound to localhost only (won't work in Docker)
-- All endpoints exposed (security risk)
-- Shutdown endpoint enabled (dangerous in production)
-
-**Recommended for Docker:**
-```properties
-# Allow actuator access from container network
-management.server.port=8081
-management.endpoints.web.exposure.include=health,info,metrics
-management.endpoint.shutdown.enabled=false
-
-# For health checks
-management.endpoint.health.show-details=when-authorized
-```
-
----
-
-### 🟢 Low Priority Considerations
-
-#### 8. **Build Performance**
-
-**Recommendations:**
-- Use BuildKit for parallel builds
-- Implement proper layer caching
-- Consider using Jib or Cloud Native Buildpacks
-
-#### 9. **Observability**
-
-**Missing:**
-- Structured logging configuration
-- Metrics export configuration
-- Distributed tracing setup
-
----
-
-## Summary of Upgrade Blockers
-
-### Must Fix Before Spring Boot 3 Migration:
-
-1. ✅ Upgrade Java from 8 to 17+ (preferably 21)
-2. ✅ Update all `javax.*` imports to `jakarta.*`
-3. ✅ Migrate JUnit 4 to JUnit 5
-4. ✅ Remove deprecated `ignoreUnknownFields` from `@ConfigurationProperties`
-5. ✅ Update `management.httptrace.*` to `management.httpexchanges.*`
-6. ✅ Update Docker base images to Java 17+
-7. ✅ Fix actuator configuration for Docker networking
-8. ✅ Update Maven plugins (Surefire, Failsafe)
-9. ✅ Add comprehensive test coverage for critical components
-10. ✅ Review and update all dependencies to Spring Boot 3.x compatible versions
-
----
-
-## Recommended Migration Path
-
-1. **Phase 1: Preparation**
-   - Add missing test coverage
-   - Update to latest Spring Boot 2.7.x (migration stepping stone)
-   - Update Java to 17
-   - Update Docker images
-
-2. **Phase 2: Code Updates**
-   - Migrate javax.* to jakarta.*
-   - Update JUnit 4 to JUnit 5
-   - Fix deprecated patterns
-   - Update configuration properties
-
-3. **Phase 3: Spring Boot 3 Migration**
-   - Update to Spring Boot 3.3.x
-   - Test all endpoints and actuator features
-   - Verify Docker deployment
-   - Performance testing
-
-4. **Phase 4: Validation**
-   - Run full test suite
-   - Security scanning
-   - Load testing
-   - Production deployment
-
----
-
-**End of Analysis Report**
+*Analysis completed: 2026-05-02*  
+*Analyzed by: SpringBoard Modernization Team*
