@@ -176,8 +176,9 @@ export async function POST(request: NextRequest) {
       console.log(`[Server] GitHub API response status for branch ${branch}: ${pomResponse.status}`);
 
       if (pomResponse.ok) {
-        pomData = await pomResponse.json();
-        pomContent = Buffer.from(pomData.content || '', 'base64').toString('utf-8');
+        const fetchedPomData: GitHubFile = await pomResponse.json();
+        pomData = fetchedPomData;
+        pomContent = Buffer.from(fetchedPomData.content || '', 'base64').toString('utf-8');
         console.log(`[Server] Successfully fetched pom.xml from branch ${branch}`);
         break;
       } else if (pomResponse.status === 404) {
