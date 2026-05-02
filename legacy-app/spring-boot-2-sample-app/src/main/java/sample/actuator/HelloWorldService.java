@@ -18,11 +18,21 @@ package sample.actuator;
 
 import org.springframework.stereotype.Service;
 
+/**
+ * Service class that provides hello message functionality.
+ * This service is used by the REST controller to generate greeting messages.
+ *
+ * @author Spring Boot Team
+ * @since 3.1.5
+ */
 @Service
 public class HelloWorldService {
 
-	
-
+	/**
+	 * Retrieves a hello message indicating the application is running in a Docker container.
+	 *
+	 * @return a greeting message string
+	 */
 	public String getHelloMessage() {
 		return "Spring boot says hello from a Docker container";
 	}

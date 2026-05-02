@@ -18,7 +18,14 @@ package sample.actuator;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "service", ignoreUnknownFields = false)
+/**
+ * Configuration properties for service-related settings.
+ * Properties are bound from application configuration with the "service" prefix.
+ *
+ * @author Spring Boot Team
+ * @since 3.1.5
+ */
+@ConfigurationProperties(prefix = "service")
 public class ServiceProperties {
 
 	/**
@@ -26,10 +33,20 @@ public class ServiceProperties {
 	 */
 	private String name = "World";
 
+	/**
+	 * Gets the service name.
+	 *
+	 * @return the service name
+	 */
 	public String getName() {
 		return this.name;
 	}
 
+	/**
+	 * Sets the service name.
+	 *
+	 * @param name the service name to set
+	 */
 	public void setName(String name) {
 		this.name = name;
 	}
