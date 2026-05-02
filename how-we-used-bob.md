@@ -20,9 +20,8 @@
 ### **Developer 1** - Full-Stack Lead
 
 #### **Bob Modes Used**:
-- 💻 **Code Mode** (70% of time)
-- 📝 **Plan Mode** (20% of time)
-- 🛠️ **Advanced Mode** (10% of time)
+- 📝 **Plan Mode** (60% of time)
+- 🛠️ **Ask Mode** (40% of time)
 
 #### **Key Tasks with Bob**:
 
@@ -78,8 +77,8 @@
 ### **Developer 2** - Backend & Integration
 
 #### **Bob Modes Used**:
-- 💻 **Code Mode** (80% of time)
-- 🛠️ **Advanced Mode** (20% of time)
+- 💻 **Code Mode** (10% of time)
+- 🛠️ **Advanced Mode** (90% of time)
 
 #### **Key Tasks with Bob**:
 
@@ -136,9 +135,8 @@
 ### **Developer 3** - DevOps & Documentation
 
 #### **Bob Modes Used**:
-- 📝 **Plan Mode** (40% of time)
-- 💻 **Code Mode** (40% of time)
-- 🛠️ **Advanced Mode** (20% of time)
+- 💻 **Code Mode** (15% of time)
+- 🛠️ **Advanced Mode** (85% of time)
 
 #### **Key Tasks with Bob**:
 
