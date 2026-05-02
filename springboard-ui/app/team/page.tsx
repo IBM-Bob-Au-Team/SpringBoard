@@ -1,5 +1,6 @@
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import TeamMemberAvatar from '@/components/TeamMemberAvatar';
 import { GITHUB_REPO_URL } from '@/lib/constants';
 
 export default function TeamPage() {
@@ -87,22 +88,11 @@ export default function TeamPage() {
               className="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-8 hover:border-primary/50 transition-all group"
             >
               {/* Avatar */}
-              <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-transparent border-2 border-primary/30 rounded-2xl overflow-hidden mb-6 mx-auto group-hover:scale-110 transition-transform">
-                {member.image ? (
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // Fallback to emoji if image fails to load
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.parentElement!.innerHTML = `<span class="text-5xl flex items-center justify-center h-full">${member.avatar}</span>`;
-                    }}
-                  />
-                ) : (
-                  <span className="text-5xl flex items-center justify-center h-full">{member.avatar}</span>
-                )}
-              </div>
+              <TeamMemberAvatar
+                image={member.image}
+                name={member.name}
+                avatar={member.avatar}
+              />
 
               {/* Name & Role */}
               <div className="text-center mb-6">
