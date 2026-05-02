@@ -10,6 +10,7 @@ export interface AnalysisResult {
   repoName: string;
   repoUrl: string;
   repoDescription?: string;
+  isPrivate?: boolean;
   springBootVersion?: string;
   javaVersion?: string;
   dependencies?: string[];

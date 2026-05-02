@@ -55,7 +55,9 @@ export default function Home() {
   };
 
   const handleStartMigration = () => {
-    window.location.href = '/demo';
+    if (analysisResult) {
+      window.location.href = `/modernize?repoUrl=${encodeURIComponent(analysisResult.repoUrl)}&repoName=${encodeURIComponent(analysisResult.repoName)}`;
+    }
   };
 
   return (
