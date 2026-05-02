@@ -481,11 +481,39 @@ function ReportPageContent() {
               <div className="flex items-start space-x-4">
                 <div className="text-5xl">✅</div>
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-green-400 mb-3">Branch Created Successfully!</h3>
-                  <p className="text-gray-300 mb-6">
-                    The <code className="px-2 py-1 bg-green-500/20 text-green-300 rounded font-mono text-sm">{refactorSuccess.branch}</code> branch 
-                    has been created in your repository with the modernized code.
+                  <h3 className="text-2xl font-bold text-green-400 mb-3">
+                    {refactorSuccess.filesRefactored ? 'AI Refactoring Complete!' : 'Branch Created Successfully!'}
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    The <code className="px-2 py-1 bg-green-500/20 text-green-300 rounded font-mono text-sm">{refactorSuccess.branch}</code> branch
+                    has been created in your repository with {refactorSuccess.filesRefactored ? 'AI-modernized' : 'modernized'} code.
                   </p>
+
+                  {/* File Changes Summary */}
+                  {refactorSuccess.filesRefactored && refactorSuccess.changes && (
+                    <div className="bg-[#0d1117] border border-gray-800 rounded-lg p-4 mb-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-white">Files Refactored by IBM Granite</h4>
+                        <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-medium">
+                          {refactorSuccess.filesRefactored} files
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {refactorSuccess.changes.map((change, index) => (
+                          <div key={index} className="flex items-start space-x-3 text-sm">
+                            <svg className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <div className="flex-1">
+                              <div className="font-mono text-primary text-xs">{change.file}</div>
+                              <div className="text-gray-400 text-xs mt-0.5">{change.change}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row gap-3">
                     <a
                       href={refactorSuccess.branchUrl}
@@ -511,7 +539,7 @@ function ReportPageContent() {
                     </a>
                   </div>
                   <p className="text-sm text-gray-500 mt-4">
-                    🔒 Your token has been discarded and is no longer stored anywhere
+                    🔒 Your tokens have been discarded and are no longer stored anywhere
                   </p>
                 </div>
               </div>
