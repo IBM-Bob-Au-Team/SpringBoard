@@ -299,7 +299,9 @@ export default function RefactorModal({ isOpen, onClose, repoUrl, repoName, onSu
           {isRefactoring && (
             <div className="bg-[#0d1117] border border-gray-800 rounded-lg p-6 space-y-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-white">Refactoring in progress...</span>
+                <span className="text-sm font-medium text-white">
+                  {progress === 100 ? 'Refactored successfully' : 'Refactoring in progress...'}
+                </span>
                 <span className="text-sm text-primary font-semibold">{progress}%</span>
               </div>
               
@@ -314,8 +316,9 @@ export default function RefactorModal({ isOpen, onClose, repoUrl, repoName, onSu
               {/* Steps */}
               <div className="space-y-2 mt-4">
                 {steps.map((step, index) => {
+                  const currentStepIndex = steps.findIndex(s => s.key === currentStep);
                   const isActive = step.key === currentStep;
-                  const isComplete = steps.findIndex(s => s.key === currentStep) > index;
+                  const isComplete = progress === 100 || currentStepIndex > index;
                   
                   return (
                     <div
