@@ -1,13 +1,16 @@
 # 🚀 SpringBoard - AI-Powered Spring Boot Modernization
 
 > Modernize Spring Boot 2 to 3 in minutes, not days, powered by IBM Bob
+>
+> **Built by AU Team for IBM Bob Dev Day Hackathon 2026**
 
-[![Deploy](https://github.com/yourusername/SpringBoard/actions/workflows/deploy.yml/badge.svg)](https://github.com/yourusername/SpringBoard/actions/workflows/deploy.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-springboard--pink.vercel.app-blue)](https://springboard-pink.vercel.app)
+[![IBM Bob](https://img.shields.io/badge/Built%20with-IBM%20Bob-0F62FE)](https://bob.ibm.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🌟 Live Demo
 
-**🔗 [Try SpringBoard Now](https://springboard-demo.vercel.app)** *(URL will be added after deployment)*
+**🔗 [Try SpringBoard Live](https://springboard-pink.vercel.app)**
 
 ---
 
@@ -19,7 +22,7 @@
 - [Architecture](#-architecture)
 - [Features](#-features)
 - [How It Works](#-how-it-works)
-- [CI/CD Pipeline](#-cicd-pipeline)
+- [Deployment](#-deployment)
 - [Team](#-team)
 - [IBM Bob Usage](#-ibm-bob-usage)
 - [Tech Stack](#-tech-stack)
@@ -41,12 +44,12 @@ Spring Boot 2.x reached end-of-life, forcing thousands of teams to migrate to Sp
 
 ## ✨ The Solution
 
-**SpringBoard** uses IBM Bob to automate the entire Spring Boot 2 → 3 migration process:
+**SpringBoard** automates the entire Spring Boot 2 → 3 migration process:
 
-✅ **Instant Analysis** - Analyze any GitHub repo in seconds  
-✅ **AI-Powered Refactoring** - Bob modernizes your code automatically  
-✅ **Zero Manual Work** - From analysis to PR creation, fully automated  
-✅ **Production Ready** - Includes tests, docs, and deployment guides  
+✅ **Instant Analysis** - Analyze any GitHub repo in seconds
+✅ **AI-Powered Refactoring** - IBM watsonx.ai Granite model modernizes your code
+✅ **Automated Workflow** - From analysis to branch creation, fully automated
+✅ **Production Ready** - Includes modernized code and comprehensive documentation
 
 **Time Saved**: What takes 2-5 days manually takes **5-10 minutes** with SpringBoard.
 
@@ -64,7 +67,7 @@ Spring Boot 2.x reached end-of-life, forcing thousands of teams to migrate to Sp
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/SpringBoard.git
+git clone https://github.com/IBM-Bob-Au-Team/SpringBoard.git
 cd SpringBoard
 
 # Navigate to the UI directory
@@ -88,15 +91,13 @@ pnpm dev
 Create `.env.local` in the `springboard-ui` directory:
 
 ```env
-# Optional: GitHub token to avoid rate limiting
-GITHUB_TOKEN=your_github_token_here
-
 # Application URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Optional: For future watsonx integration
-WATSONX_API_KEY=
-WATSONX_PROJECT_ID=
+# Optional: IBM watsonx.ai for AI refactoring
+WATSONX_API_KEY=your_watsonx_api_key
+WATSONX_PROJECT_ID=your_watsonx_project_id
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
 ```
 
 ---
@@ -111,13 +112,15 @@ WATSONX_PROJECT_ID=
              │                                    │
              │ 1. Analyze Repo                    │ 2. Refactor Code
              ▼                                    ▼
-    ┌─────────────────┐                 ┌──────────────────┐
-    │   GitHub API    │                 │    IBM Bob AI    │
-    │                 │                 │                  │
-    │ • Fetch pom.xml │                 │ • Code Analysis  │
-    │ • Check access  │                 │ • Refactoring    │
-    │ • Parse deps    │                 │ • Test Gen       │
-    └─────────────────┘                 └──────────────────┘
+    ┌─────────────────┐                 ┌──────────────────────┐
+    │   GitHub API    │                 │  IBM watsonx.ai      │
+    │                 │                 │  Granite Model       │
+    │ • Fetch pom.xml │                 │                      │
+    │ • Check access  │                 │ • Code Refactoring   │
+    │ • Parse deps    │                 │ • javax → jakarta    │
+    └─────────────────┘                 │ • Spring Boot 3      │
+                                        │ • Java 17            │
+                                        └──────────────────────┘
              │                                    │
              │                                    │
              ▼                                    ▼
@@ -143,16 +146,6 @@ WATSONX_PROJECT_ID=
 │ • Recommendations│                    │ • Generate tests     │
 └──────────────────┘                    │ • Create PR          │
                                         └──────────────────────┘
-                                                   │
-                                                   ▼
-                                        ┌──────────────────────┐
-                                        │  watsonx Orchestrate │
-                                        │  (Coming Soon)       │
-                                        │                      │
-                                        │ • Full pipeline      │
-                                        │ • Auto testing       │
-                                        │ • Auto deployment    │
-                                        └──────────────────────┘
 ```
 
 ---
@@ -167,27 +160,22 @@ WATSONX_PROJECT_ID=
 - Identifies migration issues and risks
 - Rate limit handling with fallback token
 
-### 2️⃣ **Three Modernization Paths**
+### 2️⃣ **Two Modernization Paths**
 
 #### 🔵 **View Analysis Only** (Free)
 - Complete analysis report
 - List of all issues and recommendations
 - No GitHub token required
-- Perfect for evaluation
+- Perfect for evaluation and planning
 
-#### 🟣 **Refactor My Code** (GitHub Token Required)
-- IBM Bob analyzes and refactors your code
+#### 🟣 **AI-Powered Refactoring** (GitHub Token Required)
+- IBM watsonx.ai Granite 13B model refactors your code
 - Creates new branch: `springboard-modernized`
 - Updates to Spring Boot 3.1.5 + Java 17
 - Migrates javax.* → jakarta.*
 - Updates deprecated APIs
+- Modernizes Dockerfile and properties
 - Generates comprehensive documentation
-
-#### 🟡 **Full Auto Pipeline** (Coming Soon - watsonx Orchestrate)
-- Complete automated pipeline
-- Analysis → Refactor → Test → PR
-- Powered by IBM watsonx Orchestrate
-- Zero manual intervention
 
 ### 3️⃣ **Smart Analysis Engine**
 
@@ -196,7 +184,7 @@ Built with reusable helper functions:
 - `checkRepoAccess()` - Validates access with rate limit detection
 - `fetchPomXml()` - Retrieves Maven configuration
 - `parsePomXml()` - Extracts versions and dependencies
-- `detectIssues()` - Identifies migration problems
+- `detectMigrationIssues()` - Identifies migration problems
 
 ### 4️⃣ **Production-Ready Output**
 
@@ -232,16 +220,11 @@ Option 1: View Report (Free)
     → Review recommendations
     → Plan migration
 
-Option 2: Refactor Code (Token Required)
-    → IBM Bob analyzes codebase
-    → Creates modernized branch
-    → Refactors all files
-    → Generates documentation
-
-Option 3: Full Auto (Coming Soon)
-    → watsonx Orchestrate pipeline
-    → End-to-end automation
-    → Auto PR creation
+Option 2: AI-Powered Refactoring (Tokens Required)
+    → Provide GitHub token + optional watsonx.ai API key
+    → IBM Granite 13B model analyzes and refactors code
+    → Creates new branch with modernized code
+    → Automatically pushes changes to repository
 ```
 
 ### Step 3: Deploy
@@ -257,70 +240,46 @@ Deploy modernized app
 
 ---
 
-## 🔧 CI/CD Pipeline
+## 🔧 Deployment
 
-SpringBoard uses **GitHub Actions** for continuous integration and deployment with **security-first** design:
+SpringBoard is deployed on **Vercel** with automatic deployments on every push to main.
 
-### **Deployment Workflow** (`.github/workflows/deploy.yml`)
-- ✅ **Security Scan** - TruffleHog scans for accidentally committed secrets
-- ✅ **Build & Test** - Type checking, linting, and build validation
-- ✅ **Deploy to Vercel** - Automated production deployment
-- 🔒 **Pinned Actions** - All actions use commit SHA (not `@latest`)
-- 🔒 **Limited Permissions** - Only `contents: read` access
-- 🔒 **Frozen Lockfile** - `--frozen-lockfile` prevents supply chain attacks
+**Live URL**: https://springboard-pink.vercel.app
 
-### **PR Check Workflow** (`.github/workflows/pr-check.yml`)
-- ✅ **PR Security Scan** - Scans only PR changes for secrets
-- ✅ **Build Validation** - Ensures code compiles and passes checks
-- ✅ **Auto Comments** - Posts build status directly on PR
-- 🔒 **Blocks `.env.local`** - Prevents accidental secret commits
+### Deploy Your Own
 
-### **Security Features**
-- 🛡️ No hardcoded secrets in workflows
-- 🛡️ All secrets from GitHub repository secrets
-- 🛡️ Rate limiting and CORS protection
-- 🛡️ Security headers on all API routes
-- 🛡️ Server-side only token handling
+1. Fork this repository
+2. Import to Vercel
+3. Set Root Directory to `springboard-ui`
+4. Add environment variables:
+   - `WATSONX_API_KEY`
+   - `WATSONX_PROJECT_ID`
+   - `WATSONX_URL`
+5. Deploy!
 
-### **Required GitHub Secrets**
-1. `VERCEL_TOKEN` - Vercel deployment authentication
-2. `SPRINGBOARD_GITHUB_TOKEN` - GitHub API access for repo analysis
-3. `WATSONX_API_KEY` - IBM watsonx.ai authentication
-4. `WATSONX_PROJECT_ID` - watsonx.ai project identifier
-5. `WATSONX_URL` - watsonx.ai API endpoint
+### Required Vercel Environment Variables
 
-### **Quick Setup**
-
-📖 **See [CI-CD-SETUP.md](./CI-CD-SETUP.md) for complete setup instructions**
-
-```bash
-# 1. Add all required secrets to GitHub repository
-# 2. Configure Vercel project with environment variables
-# 3. Push to main → Auto-deploy
-# 4. Create PR → Auto-validation
-```
+| Variable | Description |
+|---|---|
+| `WATSONX_API_KEY` | IBM watsonx.ai API key |
+| `WATSONX_PROJECT_ID` | watsonx.ai project ID |
+| `WATSONX_URL` | https://us-south.ml.cloud.ibm.com |
 
 ---
 
 ## 👥 Team
 
-### **Developer 1** - Full-Stack Lead
-- Built core UI with Next.js 14 and TypeScript
-- Implemented GitHub API integration
-- Created analysis engine and helper functions
-- Set up CI/CD pipeline with GitHub Actions
+### AU Team
+Built for IBM Bob Dev Day Hackathon 2026
 
-### **Developer 2** - Backend & Integration
-- Designed API routes (`/api/analyze`, `/api/refactor`)
-- Implemented rate limiting and error handling
-- Created modernization options page
-- Integrated IBM Bob for code refactoring
+**Sam Yati** - Analyst & Planner
+Used IBM Bob Ask and Plan modes to analyze the legacy Spring Boot 2 codebase and generate a complete modernization plan. Focused on codebase analysis, architecture planning, dependency mapping, and risk assessment.
 
-### **Developer 3** - DevOps & Documentation
-- Set up Vercel deployment configuration
-- Created GitHub Actions workflows
-- Wrote comprehensive documentation
-- Designed PR templates and contribution guidelines
+**Win Yu Maung** - Refactor & UI Builder
+Used IBM Bob Code mode to refactor all Spring Boot files and build the entire Next.js SpringBoard web app. Executed code refactoring, Spring Boot 3 migration, Jakarta namespace updates, and UI development.
+
+**Swan Htet Aung** - Security & Deployment
+Used IBM Bob Code and Advanced modes to build secure API routes, watsonx.ai integration, and Vercel deployment pipeline. Implemented security measures, Docker configuration, and deployment automation.
 
 ---
 
@@ -328,7 +287,7 @@ SpringBoard uses **GitHub Actions** for continuous integration and deployment wi
 
 SpringBoard was built **entirely with IBM Bob** as our AI pair programmer:
 
-### **Total Development Time**: ~8 hours
+### **Total Development Time**: IBM Bob Dev Day Hackathon 2026
 ### **Time Saved with Bob**: ~40 hours (83% faster)
 
 #### **Bob Modes Used**:
@@ -339,14 +298,20 @@ SpringBoard was built **entirely with IBM Bob** as our AI pair programmer:
 #### **Most Impactful Bob Contributions**:
 1. **GitHub API Integration** - Bob wrote the entire helper library with proper error handling
 2. **Type Safety** - Generated comprehensive TypeScript interfaces
-3. **CI/CD Setup** - Created production-ready GitHub Actions workflows
+3. **watsonx.ai Integration** - Created complete IBM Granite model integration
 4. **Documentation** - Wrote clear, professional documentation
 
 #### **Key Metrics**:
-- **Files Created**: 25+
-- **Lines of Code**: 2,500+
+- **Files Created**: 30+
+- **Lines of Code**: 3000+
 - **Zero Bugs**: Bob's code worked first time
 - **Best Practices**: Followed Next.js 14 and TypeScript standards
+
+### Bob Sessions
+All IBM Bob task session exports and screenshots are available in the `bob_sessions/` folder:
+- `bob_sessions/dev-1/` - Analysis and planning sessions
+- `bob_sessions/dev-2/` - Refactoring and UI sessions
+- `bob_sessions/dev-3/` - Security and deployment sessions
 
 See [how-we-used-bob.md](./how-we-used-bob.md) for detailed usage breakdown.
 
@@ -364,8 +329,8 @@ See [how-we-used-bob.md](./how-we-used-bob.md) for detailed usage breakdown.
 ### **Backend**
 - Next.js API Routes
 - GitHub REST API
-- IBM Bob AI (for refactoring)
-- IBM watsonx Orchestrate (planned)
+- IBM watsonx.ai + Granite model (for AI refactoring)
+- IBM watsonx.ai REST API
 
 ### **DevOps**
 - GitHub Actions
@@ -400,17 +365,18 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
+- **AU Team** - Sam Yati, Win Yu Maung, and Swan Htet Aung for building this project
 - **IBM Bob** - Our AI pair programmer that made this possible
-- **IBM watsonx** - Powering the future of automated pipelines
+- **IBM watsonx.ai** - Powering AI-driven code refactoring with Granite model
 - **Spring Boot Team** - For the amazing framework
 - **Vercel** - For seamless deployment
+- **IBM Bob Dev Day Hackathon 2026** - For the opportunity to showcase AI-powered development
 
 ---
 
 ## 🔗 Links
 
-- **Live Demo**: [springboard-demo.vercel.app](https://springboard-demo.vercel.app) *(coming soon)*
-- **CI/CD Setup Guide**: [CI-CD-SETUP.md](./CI-CD-SETUP.md)
+- **Live Demo**: https://springboard-pink.vercel.app
 - **Security Documentation**: [SECURITY.md](./SECURITY.md)
 - **Bob Sessions**: [bob_sessions/](./bob_sessions/)
 - **Problem & Solution**: [problem-solution.md](./problem-solution.md)
@@ -420,8 +386,12 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-**Built with ❤️ and 🤖 IBM Bob**
+**Built with ❤️ and 🤖 IBM Bob by AU Team**
+
+*Sam Yati • Win Yu Maung • Swan Htet Aung*
 
 *Modernizing Spring Boot, one repository at a time*
+
+**IBM Bob Dev Day Hackathon 2026**
 
 </div>
