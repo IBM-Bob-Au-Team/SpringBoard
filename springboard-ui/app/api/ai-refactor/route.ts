@@ -134,39 +134,90 @@ export async function POST(request: NextRequest) {
       'User-Agent': 'SpringBoard-AI-Modernization',
     };
 
-    // Fetch pom.xml
-    console.log(`[Server] Fetching pom.xml from ${owner}/${repo}`);
-    const pomResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/pom.xml`,
+    // Get repository info to determine default branch
+    const repoInfoResponse = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}`,
       { headers }
     );
 
-    if (!pomResponse.ok) {
-      const errorText = await pomResponse.text();
-      console.error(`[Server] Failed to fetch pom.xml: ${pomResponse.status} - ${errorText}`);
-      
-      let errorMessage = 'Failed to fetch pom.xml. ';
-      
-      if (pomResponse.status === 404) {
-        errorMessage += 'The pom.xml file was not found in the repository root. Please ensure it exists at the root level.';
-      } else if (pomResponse.status === 401) {
-        errorMessage += 'GitHub token authentication failed. Please check your token.';
-      } else if (pomResponse.status === 403) {
-        errorMessage += 'Access denied. Make sure your GitHub token has "repo" scope with read permissions.';
-      } else {
-        errorMessage += `GitHub API returned status ${pomResponse.status}. Please try again.`;
-      }
-      
+    if (!repoInfoResponse.ok) {
       return NextResponse.json(
-        { error: errorMessage, details: errorText },
-        { status: pomResponse.status }
+        { error: 'Failed to fetch repository information' },
+        { status: 500 }
       );
     }
 
-    console.log(`[Server] Successfully fetched pom.xml`);
+    const repoInfo = await repoInfoResponse.json();
+    const defaultBranch = repoInfo.default_branch || 'main';
 
-    const pomData: GitHubFile = await pomResponse.json();
-    const pomContent = Buffer.from(pomData.content || '', 'base64').toString('utf-8');
+    // Debug logging
+    console.log(`[Server] Fetching pom.xml from ${owner}/${repo}`);
+    console.log(`[Server] Parsed owner: ${owner}`);
+    console.log(`[Server] Parsed repo: ${repo}`);
+    console.log(`[Server] Default branch: ${defaultBranch}`);
+
+    // Try branches in order: defaultBranch, main, master
+    const branchesToTry = [defaultBranch];
+    if (defaultBranch !== 'main') branchesToTry.push('main');
+    if (defaultBranch !== 'master') branchesToTry.push('master');
+
+    let pomData: GitHubFile | null = null;
+    let pomContent = '';
+    let lastError = '';
+
+    for (const branch of branchesToTry) {
+      console.log(`[Server] Trying to fetch pom.xml from branch: ${branch}`);
+      
+      const pomResponse = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/pom.xml?ref=${branch}`,
+        { headers }
+      );
+
+      console.log(`[Server] GitHub API response status for branch ${branch}: ${pomResponse.status}`);
+
+      if (pomResponse.ok) {
+        pomData = await pomResponse.json();
+        pomContent = Buffer.from(pomData.content || '', 'base64').toString('utf-8');
+        console.log(`[Server] Successfully fetched pom.xml from branch ${branch}`);
+        break;
+      } else if (pomResponse.status === 404) {
+        lastError = `pom.xml not found in branch ${branch}`;
+        console.log(`[Server] ${lastError}, trying next branch...`);
+        continue;
+      } else {
+        const errorText = await pomResponse.text();
+        console.error(`[Server] Failed to fetch pom.xml from branch ${branch}: ${pomResponse.status} - ${errorText}`);
+        lastError = errorText;
+        
+        // For non-404 errors, don't try other branches
+        let errorMessage = 'Failed to fetch pom.xml. ';
+        
+        if (pomResponse.status === 401) {
+          errorMessage += 'GitHub token authentication failed. Please check your token.';
+        } else if (pomResponse.status === 403) {
+          errorMessage += 'Access denied. Make sure your GitHub token has "repo" scope with read permissions.';
+        } else {
+          errorMessage += `GitHub API returned status ${pomResponse.status}. Please try again.`;
+        }
+        
+        return NextResponse.json(
+          { error: errorMessage, details: errorText },
+          { status: pomResponse.status }
+        );
+      }
+    }
+
+    // If we couldn't fetch pom.xml from any branch
+    if (!pomData || !pomContent) {
+      console.error(`[Server] Failed to fetch pom.xml from all branches. Last error: ${lastError}`);
+      return NextResponse.json(
+        {
+          error: 'Failed to fetch pom.xml. The pom.xml file was not found in the repository root. Please ensure it exists at the root level.',
+          details: lastError
+        },
+        { status: 404 }
+      );
+    }
 
     // Fetch Java files
     const javaFiles: Array<{ path: string; content: string; sha: string }> = [];
@@ -232,22 +283,6 @@ export async function POST(request: NextRequest) {
       propertiesContent = Buffer.from(propsData.content || '', 'base64').toString('utf-8');
       propertiesSha = propsData.sha;
     }
-
-    // Step 3: Get default branch
-    const repoResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}`,
-      { headers }
-    );
-
-    if (!repoResponse.ok) {
-      return NextResponse.json(
-        { error: 'Failed to fetch repository information' },
-        { status: 500 }
-      );
-    }
-
-    const repoData = await repoResponse.json();
-    const defaultBranch = repoData.default_branch || 'main';
 
     // Find available branch name (handle conflicts automatically)
     let branchName = 'springboard-modernized';

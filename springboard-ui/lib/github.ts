@@ -218,6 +218,7 @@ export async function checkRepoAccess(
  * Fetch pom.xml content from repository
  * - Fetch raw pom.xml from GitHub contents API
  * - Decode base64 content safely
+ * - Try main branch first, then master if main fails
  */
 export async function fetchPomXml(
   owner: string,
@@ -225,74 +226,103 @@ export async function fetchPomXml(
   defaultBranch: string,
   token?: string
 ): Promise<{ content: string | null; error?: string }> {
-  try {
-    // First, get the file tree to check if pom.xml exists
-    const treeResponse = await fetchWithAuth(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`,
-      token
-    );
-    
-    if (!treeResponse.ok) {
-      return {
-        content: null,
-        error: 'Unable to fetch repository file tree.',
-      };
-    }
-    
-    const treeData: GitHubTree = await treeResponse.json();
-    
-    // Look for pom.xml in root
-    const pomFile = treeData.tree.find(
-      (item) => item.path === 'pom.xml' && item.type === 'blob'
-    );
-    
-    if (!pomFile) {
-      return {
-        content: null,
-        error: 'No pom.xml found. SpringBoard only supports Maven Spring Boot projects.',
-      };
-    }
-    
-    // Fetch pom.xml content using contents API
-    const contentResponse = await fetchWithAuth(
-      `https://api.github.com/repos/${owner}/${repo}/contents/pom.xml?ref=${defaultBranch}`,
-      token
-    );
-    
-    if (!contentResponse.ok) {
-      return {
-        content: null,
-        error: 'Unable to fetch pom.xml content.',
-      };
-    }
-    
-    const contentData = await contentResponse.json();
-    
-    // Decode base64 content safely
-    if (contentData.content && contentData.encoding === 'base64') {
-      try {
-        const decoded = Buffer.from(contentData.content, 'base64').toString('utf-8');
-        return { content: decoded };
-      } catch (decodeError) {
-        console.error('[Server] Failed to decode pom.xml:', decodeError);
-        return {
-          content: null,
-          error: 'Unable to decode pom.xml content.',
-        };
+  // Debug logging
+  console.log(`[Server] Fetching pom.xml for ${owner}/${repo}`);
+  console.log(`[Server] Parsed owner: ${owner}`);
+  console.log(`[Server] Parsed repo: ${repo}`);
+  console.log(`[Server] Default branch from API: ${defaultBranch}`);
+  
+  // Try branches in order: defaultBranch, main, master
+  const branchesToTry = [defaultBranch];
+  if (defaultBranch !== 'main') branchesToTry.push('main');
+  if (defaultBranch !== 'master') branchesToTry.push('master');
+  
+  let lastError = '';
+  
+  for (const branch of branchesToTry) {
+    try {
+      console.log(`[Server] Trying branch: ${branch}`);
+      
+      // First, get the file tree to check if pom.xml exists
+      const treeResponse = await fetchWithAuth(
+        `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+        token
+      );
+      
+      console.log(`[Server] Tree API response status for branch ${branch}: ${treeResponse.status}`);
+      
+      if (!treeResponse.ok) {
+        if (treeResponse.status === 404) {
+          lastError = `Branch ${branch} not found`;
+          console.log(`[Server] ${lastError}, trying next branch...`);
+          continue; // Try next branch
+        }
+        lastError = 'Unable to fetch repository file tree.';
+        continue;
       }
+      
+      const treeData: GitHubTree = await treeResponse.json();
+      
+      // Look for pom.xml in root
+      const pomFile = treeData.tree.find(
+        (item) => item.path === 'pom.xml' && item.type === 'blob'
+      );
+      
+      if (!pomFile) {
+        lastError = 'No pom.xml found. SpringBoard only supports Maven Spring Boot projects.';
+        console.log(`[Server] pom.xml not found in branch ${branch}`);
+        continue;
+      }
+      
+      console.log(`[Server] Found pom.xml in branch ${branch}, fetching content...`);
+      
+      // Fetch pom.xml content using contents API
+      const contentResponse = await fetchWithAuth(
+        `https://api.github.com/repos/${owner}/${repo}/contents/pom.xml?ref=${branch}`,
+        token
+      );
+      
+      console.log(`[Server] Contents API response status for branch ${branch}: ${contentResponse.status}`);
+      
+      if (!contentResponse.ok) {
+        if (contentResponse.status === 404) {
+          lastError = `pom.xml not found in branch ${branch}`;
+          console.log(`[Server] ${lastError}, trying next branch...`);
+          continue; // Try next branch
+        }
+        lastError = 'Unable to fetch pom.xml content.';
+        continue;
+      }
+      
+      const contentData = await contentResponse.json();
+      
+      // Decode base64 content safely
+      if (contentData.content && contentData.encoding === 'base64') {
+        try {
+          const decoded = Buffer.from(contentData.content, 'base64').toString('utf-8');
+          console.log(`[Server] Successfully fetched and decoded pom.xml from branch ${branch}`);
+          return { content: decoded };
+        } catch (decodeError) {
+          console.error('[Server] Failed to decode pom.xml:', decodeError);
+          lastError = 'Unable to decode pom.xml content.';
+          continue;
+        }
+      }
+      
+      lastError = 'Invalid pom.xml format.';
+    } catch (error) {
+      console.error(`[Server] Error fetching pom.xml from branch ${branch}:`, error instanceof Error ? error.message : 'Unknown error');
+      lastError = error instanceof Error ? error.message : 'Unknown error';
+      continue;
     }
-    
-    return {
-      content: null,
-      error: 'Invalid pom.xml format.',
-    };
-  } catch (error) {
-    console.error('[Server] Failed to fetch pom.xml:', error instanceof Error ? error.message : 'Unknown error');
-    return {
-      content: null,
-      error: 'Unable to fetch pom.xml.',
-    };
   }
+  
+  // If we get here, all branches failed
+  console.error(`[Server] Failed to fetch pom.xml from all branches. Last error: ${lastError}`);
+  return {
+    content: null,
+    error: lastError || 'Unable to fetch pom.xml.',
+  };
 }
 
 /**
