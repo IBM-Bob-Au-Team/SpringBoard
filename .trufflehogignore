@@ -1,0 +1,30 @@
+# TruffleHog Ignore File
+# Add patterns here to ignore false positives in secret scanning
+
+# Example GitHub URLs in documentation
+https://github.com/
+
+# Example tokens in documentation (not real)
+ghp_example
+github_pat_example
+
+# Package lock files (contain hashes that look like secrets)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Build artifacts
+.next/
+dist/
+build/
+
+# Test fixtures with fake credentials
+**/test/**/*.fixture.*
+**/tests/**/*.fixture.*
+**/__tests__/**/*.fixture.*
+
+# Documentation examples
+**/docs/**
+**/*.md
+
+# Made with Bob
