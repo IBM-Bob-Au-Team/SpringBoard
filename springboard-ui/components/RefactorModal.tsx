@@ -113,7 +113,8 @@ export default function RefactorModal({ isOpen, onClose, repoUrl, repoName, onSu
       // Mark as complete
       setProgress(100);
       setCurrentStep('idle'); // Reset to idle so all steps show as complete
-      await new Promise(resolve => setTimeout(resolve, 300));
+      setIsRefactoring(false); // Allow user to close modal
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Give user time to see success state
 
       // Clear tokens from memory
       setGithubToken('');
