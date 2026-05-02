@@ -67,6 +67,7 @@ export interface RefactorResponse {
   branch?: string;
   prUrl?: string | null;
   status?: string;
+  repoUrl?: string;
   error?: string;
 }
 
