@@ -1,4 +1,5 @@
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 export default function DemoPage() {
   return (
@@ -347,6 +348,8 @@ FROM eclipse-temurin:17-jdk-alpine`}
           </a>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

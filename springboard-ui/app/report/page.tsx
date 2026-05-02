@@ -1,4 +1,5 @@
 import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 
 export default function ReportPage() {
   return (
@@ -373,6 +374,8 @@ export default function ReportPage() {
           </p>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
