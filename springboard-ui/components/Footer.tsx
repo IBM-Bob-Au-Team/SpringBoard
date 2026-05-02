@@ -83,9 +83,14 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm">
-              © 2026 SpringBoard Hackathon. Built with IBM Bob IDE.
-            </p>
+            <div className="text-center md:text-left">
+              <p className="text-gray-400 text-sm">
+                © 2026 AU Team. All rights reserved.
+              </p>
+              <p className="text-gray-500 text-xs mt-1">
+                Built with IBM Bob IDE for IBM Bob Dev Day Hackathon 2026
+              </p>
+            </div>
             <div className="flex items-center space-x-2 bg-primary/10 border border-primary/30 px-4 py-2 rounded-full">
               <span className="text-sm font-medium text-primary">Powered by IBM Bob</span>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -15,7 +15,7 @@ interface StoredReport {
   data: AnalysisResult;
 }
 
-export default function ReportPage() {
+function ReportPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [analysisData, setAnalysisData] = useState<AnalysisResult | null>(null);
@@ -441,7 +441,7 @@ export default function ReportPage() {
                 </div>
                 <h3 className="text-2xl font-bold mb-3">View Our Demo</h3>
                 <p className="text-gray-400 mb-6 leading-relaxed">
-                  See how SpringBoard modernized its own legacy Spring Boot 2 application to Spring Boot 3.x
+                  See how SpringBoard modernized its own legacy Spring Boot 2 application to Spring Boot 3.x 
                   with automated refactoring, testing, and deployment.
                 </p>
                 <a
@@ -462,7 +462,7 @@ export default function ReportPage() {
                 </div>
                 <h3 className="text-2xl font-bold mb-3">Refactor My Repository</h3>
                 <p className="text-gray-400 mb-6 leading-relaxed">
-                  Let SpringBoard create a new branch with modernized code in your repository.
+                  Let SpringBoard create a new branch with modernized code in your repository. 
                   Your original code remains untouched.
                 </p>
                 <button
@@ -483,7 +483,7 @@ export default function ReportPage() {
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-green-400 mb-3">Branch Created Successfully!</h3>
                   <p className="text-gray-300 mb-6">
-                    The <code className="px-2 py-1 bg-green-500/20 text-green-300 rounded font-mono text-sm">{refactorSuccess.branch}</code> branch
+                    The <code className="px-2 py-1 bg-green-500/20 text-green-300 rounded font-mono text-sm">{refactorSuccess.branch}</code> branch 
                     has been created in your repository with the modernized code.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -651,6 +651,28 @@ export default function ReportPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#161616] text-white flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <svg className="animate-spin h-12 w-12 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p className="text-xl text-gray-400">Loading...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    }>
+      <ReportPageContent />
+    </Suspense>
   );
 }
 
