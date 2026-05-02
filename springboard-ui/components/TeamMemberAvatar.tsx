@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface TeamMemberAvatarProps {
   image?: string;
   name: string;
@@ -7,18 +9,16 @@ interface TeamMemberAvatarProps {
 }
 
 export default function TeamMemberAvatar({ image, name, avatar }: TeamMemberAvatarProps) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-transparent border-2 border-primary/30 rounded-2xl overflow-hidden mb-6 mx-auto group-hover:scale-110 transition-transform">
-      {image ? (
+      {image && !imageError ? (
         <img
           src={image}
           alt={name}
           className="w-full h-full object-cover"
-          onError={(e) => {
-            // Fallback to emoji if image fails to load
-            e.currentTarget.style.display = 'none';
-            e.currentTarget.parentElement!.innerHTML = `<span class="text-5xl flex items-center justify-center h-full">${avatar}</span>`;
-          }}
+          onError={() => setImageError(true)}
         />
       ) : (
         <span className="text-5xl flex items-center justify-center h-full">{avatar}</span>
