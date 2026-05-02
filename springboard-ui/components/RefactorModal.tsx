@@ -266,7 +266,7 @@ export default function RefactorModal({ isOpen, onClose, repoUrl, repoName, onSu
                 type={showWatsonxKey ? 'text' : 'password'}
                 value={watsonxApiKey}
                 onChange={(e) => setWatsonxApiKey(e.target.value)}
-                placeholder="Leave empty to use demo quota"
+                placeholder="Leave empty to use shared quota"
                 disabled={isRefactoring}
                 className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors disabled:opacity-50 pr-12"
               />
@@ -287,9 +287,15 @@ export default function RefactorModal({ isOpen, onClose, repoUrl, repoName, onSu
                 )}
               </button>
             </div>
-            <p className="text-xs text-gray-500">
-              Or provide your own watsonx.ai API key for unlimited usage
-            </p>
+            <div className="flex items-start space-x-2 text-xs text-gray-500">
+              <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-gray-400">We provide a shared quota for all users.</p>
+                <p className="text-gray-500 mt-1">If quota is exhausted or you need unlimited usage, provide your own watsonx.ai API key.</p>
+              </div>
+            </div>
           </div>
 
           {/* Progress UI */}

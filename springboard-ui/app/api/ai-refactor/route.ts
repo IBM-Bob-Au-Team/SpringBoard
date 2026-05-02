@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     if (!watsonxKey || !watsonxProjectId) {
       return NextResponse.json(
         {
-          error: 'Watsonx.ai is not configured. Please provide your own API key or contact the administrator.',
+          error: 'IBM watsonx.ai service is temporarily unavailable. Please try again later or provide your own API key.',
         },
         { status: 503 }
       );
