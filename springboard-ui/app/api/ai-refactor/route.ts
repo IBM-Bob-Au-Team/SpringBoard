@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
-import {
-  getIAMToken,
-  refactorPomXml,
-  refactorJavaFile,
-  refactorDockerfile,
-  refactorProperties,
-} from '@/lib/watsonx';
+import { refactorWithWatsonx } from '@/lib/watsonx';
 
 interface AIRefactorRequest {
   repoUrl: string;
@@ -64,23 +58,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate GitHub URL
-    const githubUrlPattern = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
-    const match = repoUrl.match(githubUrlPattern);
+    // Validate and parse GitHub URL
+    // Remove trailing slashes and .git suffix
+    const cleanUrl = repoUrl.trim().replace(/\/+$/, '').replace(/\.git$/, '');
+    const githubUrlPattern = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)$/;
+    const match = cleanUrl.match(githubUrlPattern);
 
     if (!match) {
+      console.error('[Server] Invalid GitHub URL:', repoUrl);
       return NextResponse.json(
-        { error: 'Invalid GitHub repository URL' },
+        { error: 'Invalid GitHub repository URL. Expected format: https://github.com/owner/repo' },
         { status: 400 }
       );
     }
 
     const [, owner, repo] = match;
+    console.log('[Server] Parsed GitHub URL - Owner:', owner, 'Repo:', repo);
 
-    // Get watsonx credentials
+    // Validate watsonx credentials
     const watsonxKey = watsonxApiKey || process.env.WATSONX_API_KEY;
     const watsonxProjectId = process.env.WATSONX_PROJECT_ID;
-    const watsonxUrl = process.env.WATSONX_URL || 'https://us-south.ml.cloud.ibm.com';
 
     if (!watsonxKey || !watsonxProjectId) {
       return NextResponse.json(
@@ -91,10 +88,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 1: Get IAM token for watsonx.ai
-    const iamToken = await getIAMToken(watsonxKey);
-
-    // Step 2: Verify repository access first
+    // Step 1: Verify repository access first
+    console.log(`[Server] Checking access to ${owner}/${repo}`);
+    console.log(`[Server] GitHub token present:`, !!githubToken);
+    console.log(`[Server] GitHub token length:`, githubToken?.length);
+    console.log(`[Server] GitHub token prefix:`, githubToken?.substring(0, 4));
+    
     const repoCheckResponse = await fetch(
       `https://api.github.com/repos/${owner}/${repo}`,
       {
@@ -106,26 +105,31 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    console.log(`[Server] Repository check response status:`, repoCheckResponse.status);
+
     if (!repoCheckResponse.ok) {
+      const errorBody = await repoCheckResponse.text();
+      console.error(`[Server] Repository access failed:`, repoCheckResponse.status, errorBody);
+      
       let errorMessage = 'Unable to access repository. ';
       
       if (repoCheckResponse.status === 401) {
-        errorMessage += 'GitHub token is invalid or expired.';
+        errorMessage += 'GitHub token is invalid or expired. Please create a new token with "repo" scope.';
       } else if (repoCheckResponse.status === 403) {
-        errorMessage += 'GitHub token does not have permission to access this repository.';
+        errorMessage += 'GitHub token does not have permission to access this repository. Make sure your token has "repo" scope with write access.';
       } else if (repoCheckResponse.status === 404) {
-        errorMessage += 'Repository not found or token does not have access.';
+        errorMessage += 'Repository not found or token does not have access. Verify the repository URL and that your token has "repo" scope.';
       } else {
-        errorMessage += `GitHub API error (${repoCheckResponse.status}).`;
+        errorMessage += `GitHub API error (${repoCheckResponse.status}): ${errorBody}`;
       }
-      
-      console.error(`[Server] Repository access failed: ${repoCheckResponse.status}`);
       
       return NextResponse.json(
         { error: errorMessage },
         { status: repoCheckResponse.status }
       );
     }
+    
+    console.log(`[Server] Repository access successful`);
 
     // Step 3: Fetch repository files from GitHub
     const headers = {
@@ -289,7 +293,7 @@ export async function POST(request: NextRequest) {
     let branchName = 'springboard-modernized';
     let branchExists = true;
     let attemptCount = 0;
-    const maxAttempts = 10;
+    const maxAttempts = 100;
 
     while (branchExists && attemptCount < maxAttempts) {
       const branchCheckResponse = await fetch(
@@ -300,18 +304,19 @@ export async function POST(request: NextRequest) {
       if (!branchCheckResponse.ok) {
         // Branch doesn't exist, we can use this name
         branchExists = false;
+        console.log(`[Server] Using branch name: ${branchName}`);
       } else {
-        // Branch exists, try with timestamp
+        // Branch exists, try with incremental number
         attemptCount++;
-        const timestamp = Date.now();
-        branchName = `springboard-modernized-${timestamp}`;
+        branchName = `springboard-modernized-${attemptCount}`;
+        console.log(`[Server] Branch exists, trying: ${branchName}`);
       }
     }
 
     if (attemptCount >= maxAttempts) {
       return NextResponse.json(
         {
-          error: 'Unable to create a unique branch name. Please try again later.',
+          error: 'Unable to create a unique branch name after 100 attempts. Please delete some old branches.',
         },
         { status: 500 }
       );
@@ -360,7 +365,7 @@ export async function POST(request: NextRequest) {
     const changes: FileChange[] = [];
 
     // Refactor pom.xml
-    const refactoredPom = await refactorPomXml(pomContent, iamToken, watsonxProjectId, watsonxUrl);
+    const refactoredPom = await refactorWithWatsonx(pomContent, 'pom', watsonxKey);
     
     // Push refactored pom.xml
     await fetch(
@@ -387,11 +392,10 @@ export async function POST(request: NextRequest) {
 
     // Refactor Java files
     for (const javaFile of javaFiles) {
-      const refactoredJava = await refactorJavaFile(
+      const refactoredJava = await refactorWithWatsonx(
         javaFile.content,
-        iamToken,
-        watsonxProjectId,
-        watsonxUrl
+        'java',
+        watsonxKey
       );
 
       await fetch(
@@ -419,11 +423,10 @@ export async function POST(request: NextRequest) {
 
     // Refactor Dockerfile if exists
     if (dockerfileContent && dockerfileSha) {
-      const refactoredDocker = await refactorDockerfile(
+      const refactoredDocker = await refactorWithWatsonx(
         dockerfileContent,
-        iamToken,
-        watsonxProjectId,
-        watsonxUrl
+        'dockerfile',
+        watsonxKey
       );
 
       await fetch(
@@ -451,11 +454,10 @@ export async function POST(request: NextRequest) {
 
     // Refactor application.properties if exists
     if (propertiesContent && propertiesSha) {
-      const refactoredProps = await refactorProperties(
+      const refactoredProps = await refactorWithWatsonx(
         propertiesContent,
-        iamToken,
-        watsonxProjectId,
-        watsonxUrl
+        'properties',
+        watsonxKey
       );
 
       await fetch(
