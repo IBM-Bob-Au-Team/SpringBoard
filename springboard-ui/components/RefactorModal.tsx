@@ -110,7 +110,10 @@ export default function RefactorModal({ isOpen, onClose, repoUrl, repoName, onSu
       setProgress(95);
       await new Promise(resolve => setTimeout(resolve, 500));
 
+      // Mark as complete
       setProgress(100);
+      setCurrentStep('idle'); // Reset to idle so all steps show as complete
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Clear tokens from memory
       setGithubToken('');
