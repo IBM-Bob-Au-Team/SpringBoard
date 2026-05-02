@@ -1,8 +1,5 @@
-/**
- * Simple in-memory rate limiter
- * - Max 5 requests per IP per 60 seconds
- * - Automatically cleans up expired entries
- */
+// Rate limiting utility for API routes
+// Tracks requests per IP address with a sliding window
 
 interface RateLimitEntry {
   count: number;
@@ -10,100 +7,102 @@ interface RateLimitEntry {
 }
 
 // In-memory store for rate limiting
+// In production, use Redis or similar
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
-// Configuration
-const MAX_REQUESTS = 5;
-const WINDOW_MS = 60 * 1000; // 60 seconds
-
-/**
- * Clean up expired entries from the rate limit store
- */
-function cleanupExpiredEntries(): void {
+// Clean up old entries every 5 minutes
+setInterval(() => {
   const now = Date.now();
-  const expiredKeys: string[] = [];
-
   for (const [ip, entry] of rateLimitStore.entries()) {
     if (now > entry.resetTime) {
-      expiredKeys.push(ip);
+      rateLimitStore.delete(ip);
     }
   }
+}, 5 * 60 * 1000);
 
-  for (const key of expiredKeys) {
-    rateLimitStore.delete(key);
-  }
+export interface RateLimitResult {
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+  error?: string;
 }
 
 /**
- * Check if an IP address has exceeded the rate limit
- * @param ip - The IP address to check
- * @returns true if request is allowed, false if rate limited
+ * Check if a request should be rate limited
+ * @param identifier - Usually the IP address
+ * @param limit - Maximum number of requests allowed
+ * @param windowMs - Time window in milliseconds (default: 60 seconds)
+ * @returns RateLimitResult with success status and metadata
  */
-export function checkRateLimit(ip: string): boolean {
-  // Clean up expired entries periodically
-  cleanupExpiredEntries();
-
+export function checkRateLimit(
+  identifier: string,
+  limit: number = 5,
+  windowMs: number = 60 * 1000
+): RateLimitResult {
   const now = Date.now();
-  const entry = rateLimitStore.get(ip);
+  const entry = rateLimitStore.get(identifier);
 
-  if (!entry) {
-    // First request from this IP
-    rateLimitStore.set(ip, {
+  // No previous requests or window expired
+  if (!entry || now > entry.resetTime) {
+    const resetTime = now + windowMs;
+    rateLimitStore.set(identifier, {
       count: 1,
-      resetTime: now + WINDOW_MS,
+      resetTime,
     });
-    return true;
+
+    return {
+      success: true,
+      limit,
+      remaining: limit - 1,
+      reset: resetTime,
+    };
   }
 
-  // Check if the window has expired
-  if (now > entry.resetTime) {
-    // Reset the counter
-    rateLimitStore.set(ip, {
-      count: 1,
-      resetTime: now + WINDOW_MS,
-    });
-    return true;
+  // Within rate limit
+  if (entry.count < limit) {
+    entry.count++;
+    rateLimitStore.set(identifier, entry);
+
+    return {
+      success: true,
+      limit,
+      remaining: limit - entry.count,
+      reset: entry.resetTime,
+    };
   }
 
-  // Within the window, check if limit exceeded
-  if (entry.count >= MAX_REQUESTS) {
-    return false; // Rate limited
-  }
-
-  // Increment the counter
-  entry.count++;
-  rateLimitStore.set(ip, entry);
-  return true;
+  // Rate limit exceeded
+  return {
+    success: false,
+    limit,
+    remaining: 0,
+    reset: entry.resetTime,
+    error: `Too many requests. Please wait ${Math.ceil((entry.resetTime - now) / 1000)} seconds before trying again.`,
+  };
 }
 
 /**
- * Get remaining requests for an IP
- * @param ip - The IP address to check
- * @returns number of remaining requests
+ * Get the client IP address from the request
+ * @param request - Next.js request object
+ * @returns IP address string
  */
-export function getRemainingRequests(ip: string): number {
-  const entry = rateLimitStore.get(ip);
-  if (!entry) return MAX_REQUESTS;
+export function getClientIp(request: Request): string {
+  // Try various headers that might contain the real IP
+  const headers = new Headers(request.headers);
+  
+  const forwardedFor = headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    return forwardedFor.split(',')[0].trim();
+  }
 
-  const now = Date.now();
-  if (now > entry.resetTime) return MAX_REQUESTS;
+  const realIp = headers.get('x-real-ip');
+  if (realIp) {
+    return realIp;
+  }
 
-  return Math.max(0, MAX_REQUESTS - entry.count);
-}
-
-/**
- * Get time until rate limit reset for an IP
- * @param ip - The IP address to check
- * @returns seconds until reset, or 0 if not rate limited
- */
-export function getResetTime(ip: string): number {
-  const entry = rateLimitStore.get(ip);
-  if (!entry) return 0;
-
-  const now = Date.now();
-  if (now > entry.resetTime) return 0;
-
-  return Math.ceil((entry.resetTime - now) / 1000);
+  // Fallback to a default identifier
+  return 'unknown';
 }
 
 // Made with Bob

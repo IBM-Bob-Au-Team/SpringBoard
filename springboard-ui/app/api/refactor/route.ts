@@ -1,286 +1,218 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { RefactorRequest, RefactorResponse } from '@/lib/types';
-import { sanitizeRepoUrl, parseGitHubUrl, fetchWithAuth } from '@/lib/github';
-import { checkRateLimit, getRemainingRequests, getResetTime } from '@/lib/rateLimit';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
-// SECURITY: CORS headers - only allow own domain
-const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || 'https://springboard.vercel.app',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
-
-// SECURITY: Request size limit (1KB)
-const MAX_BODY_SIZE = 1024; // 1KB
-
-export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders });
+interface RefactorRequest {
+  repoUrl: string;
+  token: string;
 }
 
-/**
- * SECURITY: Secure refactoring API route
- * - Server-side only, token never touches browser after submission
- * - Verifies GitHub token write access before any operations
- * - Rate limited: max 5 requests per IP per minute
- * - Strict input validation
- * - Security event logging (never logs actual tokens)
- * - Request size limit: 1KB max
- * - CORS restricted to own domain
- */
+interface GitHubRepo {
+  owner: {
+    login: string;
+  };
+  name: string;
+  default_branch: string;
+  permissions?: {
+    push: boolean;
+  };
+}
+
+interface GitHubRef {
+  ref: string;
+  object: {
+    sha: string;
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
-    // SECURITY: Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 
-               request.headers.get('x-real-ip') || 
-               'unknown';
+    // Rate limiting: 5 requests per IP per minute
+    const clientIp = getClientIp(request);
+    const rateLimitResult = checkRateLimit(clientIp, 5, 60 * 1000);
 
-    // SECURITY: Rate limit check - max 5 requests per IP per minute
-    if (!checkRateLimit(ip)) {
-      const resetTime = getResetTime(ip);
-      console.log(`[Server] Rate limit exceeded for IP: ${ip}`);
-      
+    if (!rateLimitResult.success) {
       return NextResponse.json(
-        { 
-          error: `Rate limit exceeded. Please try again in ${resetTime} seconds.`,
-          success: false 
-        } as RefactorResponse,
+        { error: rateLimitResult.error },
         { 
           status: 429,
           headers: {
-            ...corsHeaders,
-            'Retry-After': resetTime.toString(),
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': resetTime.toString(),
+            'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+            'X-RateLimit-Reset': rateLimitResult.reset.toString(),
           }
         }
-      );
-    }
-
-    // SECURITY: Check request size (max 1KB)
-    const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > MAX_BODY_SIZE) {
-      console.log(`[Server] Request too large: ${contentLength} bytes`);
-      return NextResponse.json(
-        { error: 'Request too large', success: false } as RefactorResponse,
-        { status: 413, headers: corsHeaders }
       );
     }
 
     const body: RefactorRequest = await request.json();
     const { repoUrl, token } = body;
 
-    // SECURITY: Validate repoUrl is provided
-    if (!repoUrl) {
+    // Validate inputs
+    if (!repoUrl || !token) {
       return NextResponse.json(
-        { error: 'Repository URL is required', success: false } as RefactorResponse,
-        { status: 400, headers: corsHeaders }
+        { error: 'Repository URL and token are required' },
+        { status: 400 }
       );
     }
 
-    // SECURITY: Validate token is provided
-    if (!token) {
+    // Validate GitHub URL
+    const githubUrlPattern = /^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/;
+    const match = repoUrl.match(githubUrlPattern);
+
+    if (!match) {
       return NextResponse.json(
-        { error: 'GitHub token is required for refactoring', success: false } as RefactorResponse,
-        { status: 400, headers: corsHeaders }
+        { error: 'Invalid GitHub repository URL. Expected format: https://github.com/owner/repo' },
+        { status: 400 }
       );
     }
 
-    // SECURITY: Validate token format (ghp_ or github_pat_)
+    const [, owner, repo] = match;
+
+    // Validate token format
     if (!token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
-      console.log('[Server] Invalid token format provided');
+      return NextResponse.json(
+        { error: 'Invalid token format. GitHub tokens should start with "ghp_" or "github_pat_"' },
+        { status: 400 }
+      );
+    }
+
+    // Verify token has write access
+    const repoResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'SpringBoard-Modernization',
+      },
+    });
+
+    if (!repoResponse.ok) {
+      if (repoResponse.status === 401) {
+        return NextResponse.json(
+          { error: 'Invalid token. Please check your GitHub token and try again.' },
+          { status: 401 }
+        );
+      }
+      if (repoResponse.status === 404) {
+        return NextResponse.json(
+          { error: 'Repository not found or token does not have access to this repository.' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'Failed to verify repository access' },
+        { status: repoResponse.status }
+      );
+    }
+
+    const repoData: GitHubRepo = await repoResponse.json();
+
+    // Check if token has push permission
+    if (!repoData.permissions?.push) {
       return NextResponse.json(
         { 
-          error: 'Token validation failed. Please check your token has the correct permissions.',
-          success: false 
-        } as RefactorResponse,
-        { status: 401, headers: corsHeaders }
+          error: 'Token does not have write access to this repository. Make sure you selected the "repo" scope when creating the token.' 
+        },
+        { status: 403 }
       );
     }
 
-    // SECURITY: Sanitize and validate URL
-    const sanitized = sanitizeRepoUrl(repoUrl);
-    
-    // SECURITY: Must be a valid github.com URL
-    if (!sanitized.startsWith('https://github.com/')) {
-      return NextResponse.json(
-        { error: 'Invalid GitHub URL', success: false } as RefactorResponse,
-        { status: 400, headers: corsHeaders }
-      );
-    }
+    const defaultBranch = repoData.default_branch || 'main';
+    const branchName = 'springboard-modernized';
 
-    // SECURITY: Parse and validate URL structure
-    const parsed = parseGitHubUrl(sanitized);
-    if (!parsed) {
-      return NextResponse.json(
-        { error: 'Invalid GitHub URL format', success: false } as RefactorResponse,
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
-    const { owner, repo } = parsed;
-
-    // SECURITY: Log refactor request (never log token)
-    console.log(`[Server] Refactor requested for repo: ${owner}/${repo}`);
-
-    // SECURITY: Verify token has write access using read-only test call first
-    try {
-      const repoResponse = await fetchWithAuth(
-        `https://api.github.com/repos/${owner}/${repo}`,
-        token
-      );
-
-      if (!repoResponse.ok) {
-        // SECURITY: Generic error - don't reveal if token or repo was wrong
-        console.log(`[Server] Token validation: failed (status ${repoResponse.status})`);
-        return NextResponse.json(
-          {
-            error: 'Token validation failed. Please check your token has the correct permissions.',
-            success: false
-          } as RefactorResponse,
-          { status: 401, headers: corsHeaders }
-        );
+    // Check if branch already exists
+    const branchCheckResponse = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/git/ref/heads/${branchName}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'SpringBoard-Modernization',
+        },
       }
-
-      const repoData = await repoResponse.json();
-
-      // SECURITY: Check if token has write (push) access
-      const hasWriteAccess = repoData.permissions?.push || repoData.permissions?.admin;
-
-      if (!hasWriteAccess) {
-        // SECURITY: Generic error - don't reveal specific permission issue
-        console.log('[Server] Token validation: failed (no write access)');
-        return NextResponse.json(
-          {
-            error: 'Token validation failed. Please check your token has the correct permissions.',
-            success: false
-          } as RefactorResponse,
-          { status: 403, headers: corsHeaders }
-        );
-      }
-
-      console.log('[Server] Token validation: passed');
-
-    } catch (error) {
-      // SECURITY: Generic error for any validation failure
-      console.error('[Server] Token validation error:', error instanceof Error ? error.message : 'Unknown');
-      return NextResponse.json(
-        {
-          error: 'Token validation failed. Please check your token has the correct permissions.',
-          success: false
-        } as RefactorResponse,
-        { status: 401, headers: corsHeaders }
-      );
-    }
-
-    // Get default branch
-    const repoInfoResponse = await fetchWithAuth(
-      `https://api.github.com/repos/${owner}/${repo}`,
-      token
-    );
-    const repoInfo = await repoInfoResponse.json();
-    const defaultBranch = repoInfo.default_branch || 'main';
-
-    // Get the SHA of the default branch
-    const refResponse = await fetchWithAuth(
-      `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${defaultBranch}`,
-      token
-    );
-
-    if (!refResponse.ok) {
-      console.error('[Server] Failed to get default branch ref');
-      return NextResponse.json(
-        {
-          error: 'Failed to access repository branch information',
-          success: false
-        } as RefactorResponse,
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    const refData = await refResponse.json();
-    const sha = refData.object.sha;
-
-    // Check if springboard-modernized branch already exists
-    const branchCheckResponse = await fetchWithAuth(
-      `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/springboard-modernized`,
-      token
     );
 
     if (branchCheckResponse.ok) {
-      // Branch already exists
       return NextResponse.json(
-        {
-          error: 'Branch springboard-modernized already exists in this repo.',
-          success: false
-        } as RefactorResponse,
-        { status: 409, headers: corsHeaders }
+        { 
+          error: `Branch "${branchName}" already exists in your repository. Please delete it first or use a different repository.`,
+          branchExists: true,
+        },
+        { status: 409 }
       );
     }
 
-    // Create new branch: springboard-modernized
-    const createBranchResponse = await fetchWithAuth(
-      `https://api.github.com/repos/${owner}/${repo}/git/refs`,
-      token
+    // Get the default branch SHA
+    const defaultBranchResponse = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/git/ref/heads/${defaultBranch}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'SpringBoard-Modernization',
+        },
+      }
     );
 
-    // Use fetch directly for POST with body
-    const createResponse = await fetch(
+    if (!defaultBranchResponse.ok) {
+      return NextResponse.json(
+        { error: `Failed to get ${defaultBranch} branch information` },
+        { status: defaultBranchResponse.status }
+      );
+    }
+
+    const defaultBranchData: GitHubRef = await defaultBranchResponse.json();
+    const defaultSha = defaultBranchData.object.sha;
+
+    // Create new branch
+    const createBranchResponse = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/git/refs`,
       {
         method: 'POST',
         headers: {
-          'Accept': 'application/vnd.github.v3+json',
           'Authorization': `Bearer ${token}`,
-          'User-Agent': 'SpringBoard-Refactor',
+          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
+          'User-Agent': 'SpringBoard-Modernization',
         },
         body: JSON.stringify({
-          ref: 'refs/heads/springboard-modernized',
-          sha: sha,
+          ref: `refs/heads/${branchName}`,
+          sha: defaultSha,
         }),
       }
     );
 
-    if (!createResponse.ok) {
-      const errorData = await createResponse.json();
-      console.error('[Server] Failed to create branch:', errorData);
+    if (!createBranchResponse.ok) {
+      const errorData = await createBranchResponse.json();
       return NextResponse.json(
-        {
-          error: 'Failed to create modernization branch',
-          success: false
-        } as RefactorResponse,
-        { status: 500, headers: corsHeaders }
+        { error: errorData.message || 'Failed to create branch' },
+        { status: createBranchResponse.status }
       );
     }
 
-    // Success!
-    console.log(`[Server] Branch created successfully: ${owner}/${repo}/springboard-modernized`);
-
-    const response: RefactorResponse = {
-      success: true,
-      branch: 'springboard-modernized',
-      message: 'Branch created. Modernization ready to run.',
-      repoUrl: sanitized,
-    };
-
-    return NextResponse.json(response, { 
-      headers: {
-        ...corsHeaders,
-        'X-RateLimit-Remaining': getRemainingRequests(ip).toString(),
-      }
-    });
-
-  } catch (error) {
-    // SECURITY: Log detailed error server-side only
-    console.error('[Server] Refactor error:', error instanceof Error ? error.message : 'Unknown error');
-
-    // SECURITY: Return generic error to client
+    // Success response
     return NextResponse.json(
       {
-        error: 'An error occurred while processing your request. Please try again.',
-        success: false
-      } as RefactorResponse,
-      { status: 500, headers: corsHeaders }
+        success: true,
+        branch: branchName,
+        branchUrl: `https://github.com/${owner}/${repo}/tree/${branchName}`,
+        prUrl: `https://github.com/${owner}/${repo}/compare/${branchName}`,
+        message: 'Branch created successfully',
+      },
+      {
+        status: 200,
+        headers: {
+          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error('Refactor API error:', error);
+    return NextResponse.json(
+      { error: 'An unexpected error occurred. Please try again.' },
+      { status: 500 }
     );
   }
 }

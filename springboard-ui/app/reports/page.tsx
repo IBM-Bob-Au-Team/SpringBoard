@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import RefactorModal, { RefactorSuccessData } from '@/components/RefactorModal';
 import type { AnalysisResult } from '@/lib/types';
 
 interface StoredReport {
@@ -22,6 +23,8 @@ export default function ReportPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showingReport, setShowingReport] = useState(false);
+  const [showRefactorModal, setShowRefactorModal] = useState(false);
+  const [refactorSuccess, setRefactorSuccess] = useState<RefactorSuccessData | null>(null);
 
   const repoUrl = searchParams.get('repoUrl');
   const repoName = searchParams.get('repoName');
@@ -424,6 +427,97 @@ export default function ReportPage() {
             </div>
           </div>
 
+          {/* What's Next Section */}
+          <div className="mb-12">
+            <h2 className="text-3xl font-bold mb-6">What's Next?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Card 1 - View Demo */}
+              <div className="bg-[#1a1a1a] border-2 border-primary/50 rounded-2xl p-8 hover:border-primary transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="text-4xl">🎬</div>
+                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium">
+                    Free - No token required
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold mb-3">View Our Demo</h3>
+                <p className="text-gray-400 mb-6 leading-relaxed">
+                  See how SpringBoard modernized its own legacy Spring Boot 2 application to Spring Boot 3.x
+                  with automated refactoring, testing, and deployment.
+                </p>
+                <a
+                  href="/demo"
+                  className="inline-block w-full px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-all text-center"
+                >
+                  View Demo
+                </a>
+              </div>
+
+              {/* Card 2 - Refactor Repository */}
+              <div className="bg-[#1a1a1a] border-2 border-purple-500/50 rounded-2xl p-8 hover:border-purple-500 transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="text-4xl">⚡</div>
+                  <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium">
+                    Requires GitHub Token
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Refactor My Repository</h3>
+                <p className="text-gray-400 mb-6 leading-relaxed">
+                  Let SpringBoard create a new branch with modernized code in your repository.
+                  Your original code remains untouched.
+                </p>
+                <button
+                  onClick={() => setShowRefactorModal(true)}
+                  className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-all"
+                >
+                  Start Refactoring
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Success Message */}
+          {refactorSuccess && (
+            <div className="mb-12 bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/30 rounded-2xl p-8">
+              <div className="flex items-start space-x-4">
+                <div className="text-5xl">✅</div>
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-green-400 mb-3">Branch Created Successfully!</h3>
+                  <p className="text-gray-300 mb-6">
+                    The <code className="px-2 py-1 bg-green-500/20 text-green-300 rounded font-mono text-sm">{refactorSuccess.branch}</code> branch
+                    has been created in your repository with the modernized code.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <a
+                      href={refactorSuccess.branchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all"
+                    >
+                      <span>View Branch on GitHub</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                    <a
+                      href={refactorSuccess.prUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center space-x-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-lg border border-white/20 transition-all"
+                    >
+                      <span>Create Pull Request</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-4">
+                    🔒 Your token has been discarded and is no longer stored anywhere
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* CTA */}
           <div className="text-center space-y-4">
             <a
@@ -432,14 +526,20 @@ export default function ReportPage() {
             >
               Analyze Another Repository
             </a>
-            <p className="text-sm text-gray-500">
-              Want to see how we modernized our own app?{' '}
-              <a href="/demo" className="text-primary hover:text-primary/80">
-                View Demo
-              </a>
-            </p>
           </div>
         </div>
+
+        {/* Refactor Modal */}
+        <RefactorModal
+          isOpen={showRefactorModal}
+          onClose={() => setShowRefactorModal(false)}
+          repoUrl={repoUrl || ''}
+          repoName={repoName || ''}
+          onSuccess={(data) => {
+            setRefactorSuccess(data);
+            setShowRefactorModal(false);
+          }}
+        />
 
         <Footer />
       </div>
