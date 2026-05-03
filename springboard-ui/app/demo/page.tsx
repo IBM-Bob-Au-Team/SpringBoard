@@ -1,6 +1,6 @@
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { GITHUB_REPO_URL } from '@/lib/constants';
+import { GITHUB_REPO_DEMO_URL, GITHUB_REPO_URL } from '@/lib/constants';
 
 export default function DemoPage() {
   return (
@@ -20,7 +20,7 @@ export default function DemoPage() {
             This is what SpringBoard did to modernize our own legacy Spring Boot 2 application
           </p>
           <a 
-            href={GITHUB_REPO_URL}
+            href={GITHUB_REPO_DEMO_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors"
