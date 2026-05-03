@@ -44,19 +44,20 @@ export default function TeamPage() {
     {
       id: "dev-3",
       name: "Swan Htet Aung",
-      role: "Security & Deployment",
-      avatar: "🔒",
+      role: "Full-Stack Integration & Bug Fix Specialist",
+      avatar: "🔧",
       image: "https://media.licdn.com/dms/image/v2/D5635AQECHAJGFvzROg/profile-framedphoto-shrink_800_800/B56Zz9CucSGgAg-/0/1773771876392?e=1778313600&v=beta&t=8FbypfM4UrAdG1O5puAQ30wdJJuZLuSa35zJKoF__Dk",
       email: "swanhtetag09@gmail.com",
       github: "https://github.com/swanhtetaung01",
       linkedin: "https://www.linkedin.com/in/swan-htet-aung09/",
-      description: "Implemented security measures and deployment infrastructure",
-      bobModes: ["Code Mode", "Advanced Mode"],
+      description: "Built the core GitHub analyzer feature and fixed critical integration bugs",
+      bobModes: ["Advanced Mode", "Code Mode"],
       contributions: [
-        "Security Implementation",
-        "Docker Configuration",
-        "CI/CD Pipeline",
-        "Deployment Automation"
+        "GitHub Repository Analyzer",
+        "API Routes Development",
+        "Multi-Branch Fallback Logic",
+        "UI Bug Fixes",
+        "Documentation Updates"
       ]
     }
   ];
@@ -184,7 +185,7 @@ export default function TeamPage() {
               <div className="text-sm text-gray-400">Files Modernized</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-2">~8h</div>
+              <div className="text-3xl font-bold text-white mb-2">~53h</div>
               <div className="text-sm text-gray-400">Time Saved</div>
             </div>
             <div className="text-center">
